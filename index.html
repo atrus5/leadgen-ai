@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#07090d">
+<title>LeadGen AI — Email Business System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07090d;--surface:#0e1219;--card:#131a24;--card2:#18212e;
+  --border:#1e2d40;--border2:#253549;
+  --accent:#3b9eff;--accent-dim:rgba(59,158,255,.12);--accent-border:rgba(59,158,255,.22);
+  --green:#22d472;--green-dim:rgba(34,212,114,.1);--green-border:rgba(34,212,114,.22);
+  --orange:#ff8c42;--orange-dim:rgba(255,140,66,.1);
+  --red:#ff4f6a;--red-dim:rgba(255,79,106,.1);
+  --yellow:#ffc83d;--yellow-dim:rgba(255,200,61,.1);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.1);
+  --text:#dde6f0;--text2:#7a8fa8;--text3:#3d5068;
+  --r:10px;--r-sm:6px;
+  --bnav:64px;--safe:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
+.logo-wrap{padding:22px 20px 16px;border-bottom:1px solid var(--border)}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:var(--accent)}
+.logo-sub{font-family:'Syne Mono',monospace;font-size:.56rem;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
+.snav{padding:12px 10px;flex:1}
+.nsec{font-family:'Syne Mono',monospace;font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);padding:10px 10px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--r-sm);cursor:pointer;color:var(--text2);font-size:.86rem;font-weight:500;transition:all .15s;margin-bottom:1px;user-select:none;position:relative}
+.ni:hover{background:var(--card);color:var(--text)}
+.ni.active{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border)}
+.ni-icon{font-size:.9rem;width:16px;text-align:center;flex-shrink:0}
+.ni-badge{margin-left:auto;background:var(--accent);color:var(--bg);font-family:'Syne Mono',monospace;font-size:.56rem;font-weight:700;padding:2px 5px;border-radius:100px;min-width:16px;text-align:center}
+.ni-badge.red{background:var(--red)}
+.smrr{padding:14px 16px;border-top:1px solid var(--border)}
+.smrr-label{font-size:.7rem;color:var(--text3);margin-bottom:3px}
+.smrr-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--green);line-height:1;margin-bottom:7px}
+.pt{background:var(--border);border-radius:100px;height:4px;overflow:hidden}
+.pf{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--green),var(--accent));transition:width .5s ease}
+.smrr-goal{font-size:.68rem;color:var(--text3);margin-top:4px}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px}
+.tb-left{min-width:0}
+.tb-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.02rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-sub{font-size:.73rem;color:var(--text2)}
+.tb-right{display:flex;gap:7px;flex-shrink:0}
+.content{flex:1;overflow-y:auto;padding:16px 18px;padding-bottom:calc(var(--bnav) + var(--safe) + 16px)}
+
+/* ── BOTTOM NAV ── */
+.bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding-bottom:var(--safe);z-index:100;height:calc(var(--bnav) + var(--safe))}
+.bnav-inner{display:flex;height:var(--bnav)}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--text3);transition:color .15s;font-size:.6rem;font-weight:600;letter-spacing:.03em;position:relative;user-select:none}
+.bni.active{color:var(--accent)}
+.bni-icon{font-size:1.2rem;line-height:1}
+.bni-badge{position:absolute;top:5px;right:calc(50% - 18px);background:var(--red);color:#fff;font-family:'Syne Mono',monospace;font-size:.5rem;font-weight:700;padding:1px 4px;border-radius:100px;min-width:14px;text-align:center}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:calc(var(--bnav) + var(--safe) + 14px);right:16px;width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;font-size:1.4rem;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(59,158,255,.4);border:none;z-index:90;transition:transform .15s}
+.fab:active{transform:scale(.95)}
+
+/* ── PAGES ── */
+.page{display:none}
+.page.active{display:block}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--r-sm);font-family:'Figtree',sans-serif;font-size:.81rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{background:var(--card);color:var(--text)}
+.btn-success{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border)}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,79,106,.2)}
+.btn-yellow{background:var(--yellow-dim);color:var(--yellow);border:1px solid rgba(255,200,61,.2)}
+.btn-purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.btn-full{width:100%;justify-content:center;padding:11px}
+.btn-sm{padding:5px 10px;font-size:.75rem}
+.btn-xs{padding:3px 8px;font-size:.69rem}
+
+/* ── STATS ── */
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px}
+.sgrid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.sc.bl::before{background:linear-gradient(90deg,var(--accent),transparent)}
+.sc.gr::before{background:linear-gradient(90deg,var(--green),transparent)}
+.sc.or::before{background:linear-gradient(90deg,var(--orange),transparent)}
+.sc.ye::before{background:linear-gradient(90deg,var(--yellow),transparent)}
+.sc.pu::before{background:linear-gradient(90deg,var(--purple),transparent)}
+.sc.rd::before{background:linear-gradient(90deg,var(--red),transparent)}
+.sv{font-family:'Syne',sans-serif;font-weight:800;font-size:1.65rem;line-height:1;margin-bottom:3px}
+.sc.bl .sv{color:var(--accent)}.sc.gr .sv{color:var(--green)}.sc.or .sv{color:var(--orange)}.sc.ye .sv{color:var(--yellow)}.sc.pu .sv{color:var(--purple)}.sc.rd .sv{color:var(--red)}
+.sl{font-size:.72rem;color:var(--text2)}
+
+/* ── SECTION ── */
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;margin-top:18px}
+.sec-t{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem}
+
+/* ── CARDS ── */
+.clist{display:flex;flex-direction:column;gap:7px}
+.ic{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;transition:border-color .15s}
+.ic:hover{border-color:var(--border2)}
+.ic-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
+.ic-name{font-weight:600;font-size:.9rem;color:var(--text)}
+.ic-meta{font-size:.76rem;color:var(--text2);margin-top:2px}
+.ic-actions{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 7px;border-radius:100px;font-size:.67rem;font-weight:600;letter-spacing:.03em;white-space:nowrap}
+.b-bl{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border)}
+.b-ye{background:var(--yellow-dim);color:var(--yellow);border:1px solid rgba(255,200,61,.25)}
+.b-or{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,140,66,.25)}
+.b-gr{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border)}
+.b-pu{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,.25)}
+.b-rd{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,79,106,.25)}
+.b-gy{background:var(--border);color:var(--text2)}
+
+/* ── PIPELINE ── */
+.pipeline-scroll{display:flex;gap:9px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px}
+.pipeline-scroll::-webkit-scrollbar{height:3px}
+.pipeline-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.pc{min-width:155px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;flex-shrink:0}
+.ph{padding:7px 11px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ph-t{font-family:'Syne Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)}
+.ph-c{font-family:'Syne Mono',monospace;font-size:.58rem;background:var(--border);padding:2px 5px;border-radius:100px;color:var(--text3)}
+.pi{padding:7px;min-height:50px;display:flex;flex-direction:column;gap:5px}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:7px 9px}
+.pcard-n{font-weight:600;font-size:.78rem;color:var(--text);margin-bottom:2px}
+.pcard-m{color:var(--text3);font-size:.7rem}
+
+/* ── MODALS ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 -20px 60px rgba(0,0,0,.6);animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mhandle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:10px auto 0}
+.mhdr{padding:13px 17px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.mtitle{font-family:'Syne',sans-serif;font-weight:700;font-size:.98rem}
+.mclose{width:26px;height:26px;border-radius:50%;background:var(--card);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.mbody{padding:15px 17px}
+.mfooter{padding:11px 17px 18px;border-top:1px solid var(--border);display:flex;gap:7px}
+
+/* ── FORMS ── */
+.fg{margin-bottom:12px}
+.fl{font-size:.74rem;font-weight:600;color:var(--text2);margin-bottom:4px;display:block}
+.fi,.fs,.fta{width:100%;background:var(--card);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 11px;color:var(--text);font-family:'Figtree',sans-serif;font-size:.86rem;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.fs option{background:var(--surface)}
+.fta{resize:vertical;min-height:75px;line-height:1.6}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+
+/* ── AI BOX ── */
+.ai-box{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:13px;font-size:.82rem;line-height:1.75;color:var(--text2);white-space:pre-wrap;min-height:90px;position:relative}
+.ai-ph{text-align:center;padding:18px;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:7px}
+.ai-ph .sp{font-size:1.6rem}
+.ai-ph p{font-size:.8rem}
+.ai-loading::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(59,158,255,.06) 50%,transparent 100%);background-size:200% 100%;animation:sweep 1.2s linear infinite;border-radius:var(--r)}
+@keyframes sweep{from{background-position:200% 0}to{background-position:-200% 0}}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px;margin-bottom:14px}
+.tab{flex:1;text-align:center;padding:6px 7px;border-radius:5px;font-size:.76rem;font-weight:600;cursor:pointer;color:var(--text2);transition:all .15s}
+.tab.active{background:var(--accent);color:#fff}
+
+/* ── FILTERS ── */
+.fpills{display:flex;gap:5px;overflow-x:auto;margin-bottom:11px;padding-bottom:2px}
+.fpills::-webkit-scrollbar{display:none}
+.fpill{background:var(--card);border:1px solid var(--border2);border-radius:100px;padding:5px 11px;font-size:.74rem;font-weight:600;cursor:pointer;color:var(--text2);white-space:nowrap;transition:all .15s}
+.fpill.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent-border)}
+.search-wrap{display:flex;gap:7px;margin-bottom:10px}
+.si{flex:1;background:var(--card);border:1px solid var(--border2);border-radius:var(--r-sm);padding:8px 11px;color:var(--text);font-family:'Figtree',sans-serif;font-size:.84rem;outline:none;-webkit-appearance:none}
+.si:focus{border-color:var(--accent)}
+.si::placeholder{color:var(--text3)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(var(--bnav) + var(--safe) + 10px);left:50%;transform:translateX(-50%) translateY(80px);background:var(--card2);border:1px solid var(--border2);border-radius:100px;padding:9px 16px;font-size:.82rem;font-weight:500;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:1000;white-space:nowrap;opacity:0;transition:all .28s ease}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ── PROGRESS ── */
+.prog-wrap{margin-bottom:13px}
+.prog-top{display:flex;justify-content:space-between;font-size:.76rem;color:var(--text2);margin-bottom:5px}
+.prog-val{color:var(--accent);font-weight:600}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--border2);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 0 4px var(--accent-dim)}
+
+/* ── LEAD SOURCE ── */
+.lsrc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:9px;overflow:hidden}
+.lsrc-hdr{padding:12px 15px;display:flex;align-items:center;gap:11px;cursor:pointer;user-select:none}
+.lsrc-icon{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.lsrc-info{flex:1}
+.lsrc-name{font-weight:700;font-size:.88rem;color:var(--text)}
+.lsrc-sub{font-size:.73rem;color:var(--text2)}
+.lsrc-tog{color:var(--text3);transition:transform .2s}
+.lsrc.open .lsrc-tog{transform:rotate(90deg)}
+.lsrc-body{display:none;padding:0 15px 14px}
+.lsrc.open .lsrc-body{display:block}
+ol.steps{list-style:none;display:flex;flex-direction:column;gap:7px;counter-reset:step}
+ol.steps li{display:flex;gap:9px;font-size:.81rem;color:var(--text2);line-height:1.5;counter-increment:step}
+ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border);border-radius:50%;width:19px;height:19px;display:flex;align-items:center;justify-content:center;font-size:.63rem;font-weight:700;flex-shrink:0;margin-top:1px}
+
+/* ── PLAYBOOK ── */
+.pb-step{display:flex;gap:13px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:13px 14px}
+.pb-num{width:24px;height:24px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);font-family:'Syne Mono',monospace;font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.pb-body{flex:1;min-width:0}
+.pb-title{font-weight:700;font-size:.9rem;color:var(--text);margin-bottom:4px}
+.pb-desc{font-size:.8rem;color:var(--text2);line-height:1.65}
+.pb-tip{margin-top:7px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:7px 9px;font-size:.76rem;color:var(--text2);line-height:1.5}
+.pb-link{margin-top:7px;font-size:.76rem;color:var(--accent);font-weight:600;cursor:pointer}
+.pb-link:hover{text-decoration:underline}
+
+/* ── HEALTH SCORE ── */
+.hs{display:flex;align-items:center;gap:6px}
+.hs-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hs-label{font-size:.72rem;font-weight:600}
+
+/* ── WARMUP ── */
+.wu-track{display:flex;gap:2px;margin:6px 0}
+.wu-day{flex:1;height:18px;border-radius:2px;background:var(--border);position:relative;cursor:default;transition:background .15s}
+.wu-day.done{background:var(--green)}
+.wu-day.today{background:var(--accent)}
+.wu-day:hover::after{content:attr(data-tip);position:absolute;bottom:22px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--border2);border-radius:4px;padding:3px 7px;font-size:.65rem;white-space:nowrap;z-index:10;pointer-events:none}
+
+/* ── EMAIL STEPS ── */
+.estep{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:7px;overflow:hidden}
+.estep-hdr{padding:11px 13px;display:flex;align-items:center;gap:9px;cursor:pointer}
+.estep-num{font-family:'Syne Mono',monospace;font-size:.63rem;color:var(--accent);letter-spacing:.1em;white-space:nowrap}
+.estep-title{flex:1;font-weight:600;font-size:.84rem}
+.estep-body{display:none;padding:0 13px 13px}
+.estep.open .estep-body{display:block}
+
+/* ── NICHE PILL ── */
+.niche-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:16px}
+.np{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:8px 10px}
+.np-n{font-weight:600;font-size:.8rem;color:var(--text)}
+.np-v{font-size:.7rem;color:var(--green)}
+
+/* ── GOAL TRACKER ── */
+.goal-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 15px;margin-bottom:8px}
+.goal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.goal-name{font-weight:600;font-size:.88rem;color:var(--text)}
+.goal-val{font-family:'Syne Mono',monospace;font-size:.75rem}
+.goal-bar{height:6px;background:var(--border);border-radius:100px;overflow:hidden}
+.goal-fill{height:100%;border-radius:100px;transition:width .4s ease}
+
+/* ── TASK ── */
+.task-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;display:flex;align-items:flex-start;gap:11px;margin-bottom:7px}
+.task-item.done{opacity:.4}
+.tcheck{width:19px;height:19px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:2px;font-size:.65rem}
+.tcheck:hover{border-color:var(--green)}
+.task-item.done .tcheck{background:var(--green);border-color:var(--green);color:var(--bg)}
+.task-content{flex:1;min-width:0}
+.task-title{font-size:.86rem;font-weight:500;color:var(--text)}
+.task-meta{font-size:.73rem;color:var(--text2);margin-top:1px}
+
+/* ── REPORT ── */
+.report-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.report-section h4{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin-bottom:8px;color:var(--text)}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .bnav{display:block}
+  .fab{display:flex}
+  .content{padding:13px 13px calc(var(--bnav) + var(--safe) + 66px)}
+  .frow{grid-template-columns:1fr;gap:0}
+  .sgrid-4{grid-template-columns:repeat(2,1fr)}
+}
+@media(min-width:769px){
+  .content{padding-bottom:18px}
+  .modal{border-radius:16px;max-width:540px}
+  .modal-overlay{align-items:center}
+}
+.empty{text-align:center;padding:36px 16px}
+.empty .ei{font-size:2rem;margin-bottom:9px}
+.empty p{font-size:.83rem;color:var(--text2);margin-bottom:12px}
+.tip-box{background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:.8rem;color:var(--text2)}
+.tip-box strong{color:var(--accent)}
+.warn-box{background:var(--red-dim);border:1px solid rgba(255,79,106,.2);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:.8rem;color:var(--text2)}
+.score-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:.7rem;font-weight:700}
+
+</style>
+</head>
+<body>
+<div id="main-app" style="display:none;width:100%;height:100%">
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo-wrap"><div class="logo-text">LeadGen AI</div><div class="logo-sub">Email Business System</div></div>
+  <nav class="snav">
+    <div class="nsec">Overview</div>
+    <div class="ni active" onclick="nav('today')"><span class="ni-icon">☀️</span>Today<span class="ni-badge" id="nb-today" style="display:none">0</span></div>
+    <div class="ni" onclick="nav('dashboard')"><span class="ni-icon">📊</span>Dashboard</div>
+    <div class="nsec">Acquisition</div>
+    <div class="ni" onclick="nav('finder')"><span class="ni-icon">🔍</span>Lead Finder</div>
+    <div class="ni" onclick="nav('prospects')"><span class="ni-icon">🎯</span>Prospects<span class="ni-badge" id="nb-prospects">0</span></div>
+    <div class="ni" onclick="nav('outreach')"><span class="ni-icon">✉️</span>Outreach</div>
+    <div class="nsec">Delivery</div>
+    <div class="ni" onclick="nav('clients')"><span class="ni-icon">🤝</span>Clients<span class="ni-badge" id="nb-clients">0</span></div>
+    <div class="ni" onclick="nav('warmup')"><span class="ni-icon">🔥</span>Warmup Tracker</div>
+    <div class="ni" onclick="nav('campaigns')"><span class="ni-icon">🚀</span>Campaigns</div>
+    <div class="ni" onclick="nav('reports')"><span class="ni-icon">📄</span>Monthly Reports</div>
+    <div class="nsec">Intelligence</div>
+    <div class="ni" onclick="nav('aireply')"><span class="ni-icon">🤖</span>AI Reply Analyzer</div>
+    <div class="ni" onclick="nav('subjectgen')"><span class="ni-icon">✍️</span>Subject Lines</div>
+    <div class="ni" onclick="nav('abtests')"><span class="ni-icon">🧪</span>A/B Tests</div>
+    <div class="ni" onclick="nav('niches')"><span class="ni-icon">📈</span>Niche Performance</div>
+    <div class="nsec">Operations</div>
+    <div class="ni" onclick="nav('scripts')"><span class="ni-icon">📝</span>Scripts</div>
+    <div class="ni" onclick="nav('templates')"><span class="ni-icon">💾</span>Templates</div>
+    <div class="ni" onclick="nav('invoices')"><span class="ni-icon">🧾</span>Invoices<span class="ni-badge red" id="nb-invoices" style="display:none">!</span></div>
+    <div class="ni" onclick="nav('referrals')"><span class="ni-icon">🌟</span>Referrals</div>
+    <div class="ni" onclick="nav('goals')"><span class="ni-icon">🏆</span>Goals</div>
+    <div class="nsec">Planning</div>
+    <div class="ni" onclick="nav('playbook')"><span class="ni-icon">📖</span>Client Playbook</div>
+    <div class="ni" onclick="nav('projections')"><span class="ni-icon">📐</span>Projections</div>
+  </nav>
+  <div class="smrr">
+    <div class="smrr-label">Monthly Revenue</div>
+    <div class="smrr-val" id="s-mrr">$0</div>
+    <div class="pt"><div class="pf" id="s-mrr-bar" style="width:0%"></div></div>
+    <div class="smrr-goal" id="s-mrr-goal">$0 of $10,000</div>
+  </div>
+  <div style="padding:10px 14px;border-top:1px solid var(--border)">
+    <button class="btn btn-ghost btn-sm" style="width:100%;opacity:.6;font-size:.72rem" onclick="signOut()">Sign Out</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-title" id="tb-title">Today's Tasks</div><div class="tb-sub" id="tb-sub">What needs your attention</div></div>
+    <div class="tb-right" id="tb-actions"></div>
+  </div>
+  <div class="content" id="content">
+
+    <!-- TODAY -->
+    <div class="page active" id="page-today">
+      <div class="sgrid">
+        <div class="sc or"><div class="sv" id="t-followups">0</div><div class="sl">Follow-ups Due</div></div>
+        <div class="sc rd"><div class="sv" id="t-alerts">0</div><div class="sl">Alerts Today</div></div>
+      </div>
+      <div id="today-alerts"></div>
+      <div class="sec-hd" style="margin-top:0"><div class="sec-t">🔥 Overdue Follow-ups</div></div>
+      <div id="today-overdue"></div>
+      <div class="sec-hd"><div class="sec-t">📋 Daily Checklist</div><button class="btn btn-ghost btn-sm" onclick="resetChecklist()">Reset</button></div>
+      <div id="today-checklist"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="sgrid-4">
+        <div class="sc bl"><div class="sv" id="d-prospects">0</div><div class="sl">Prospects</div></div>
+        <div class="sc ye"><div class="sv" id="d-contacted">0</div><div class="sl">Contacted</div></div>
+        <div class="sc or"><div class="sv" id="d-booked">0</div><div class="sl">Calls Booked</div></div>
+        <div class="sc gr"><div class="sv" id="d-clients">0</div><div class="sl">Active Clients</div></div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:4px">
+        <div style="font-size:.7rem;color:var(--text2);margin-bottom:3px">Monthly Recurring Revenue</div>
+        <div id="d-mrr" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.9rem;color:var(--green);line-height:1;margin-bottom:9px">$0</div>
+        <div class="pt"><div class="pf" id="d-mrr-bar" style="width:0%"></div></div>
+        <div id="d-mrr-goal" style="font-size:.68rem;color:var(--text3);margin-top:4px">$0 of $10,000 goal</div>
+      </div>
+      <div class="sec-hd"><div class="sec-t">Pipeline</div></div>
+      <div class="pipeline-scroll" id="d-pipeline"></div>
+      <div class="sec-hd"><div class="sec-t">Active Clients</div><button class="btn btn-ghost btn-sm" onclick="nav('clients')">See all →</button></div>
+      <div class="clist" id="d-clients-list"></div>
+    </div>
+
+    <!-- FINDER -->
+    <div class="page" id="page-finder">
+      <div class="tip-box"><strong>💡 Where to Find Leads</strong><br>Target local service businesses with high customer lifetime value. Tap each source for exact steps.</div>
+      <div class="sec-hd" style="margin-top:0"><div class="sec-t">Best Niches to Target</div></div>
+      <div class="niche-grid">
+        <div class="np"><div class="np-n">🏠 Roofing</div><div class="np-v">$5K–15K per customer</div></div>
+        <div class="np"><div class="np-n">🏡 Real Estate</div><div class="np-v">$5K–20K per deal</div></div>
+        <div class="np"><div class="np-n">🦷 Dental</div><div class="np-v">$3K–10K per patient</div></div>
+        <div class="np"><div class="np-n">❄️ HVAC</div><div class="np-v">$3K–8K per install</div></div>
+        <div class="np"><div class="np-n">⚖️ Legal</div><div class="np-v">$5K–50K per case</div></div>
+        <div class="np"><div class="np-n">🏦 Mortgage</div><div class="np-v">$3K–10K per loan</div></div>
+        <div class="np"><div class="np-n">🛍️ Retail</div><div class="np-v">$200–2K per customer</div></div>
+        <div class="np"><div class="np-n">💪 Fitness</div><div class="np-v">$1K–5K per member</div></div>
+      </div>
+      <div class="sec-hd"><div class="sec-t">Lead Sources</div></div>
+      <div id="finder-sources"></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-top:14px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin-bottom:10px">📅 Daily Routine</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;gap:10px;font-size:.8rem"><span style="color:var(--accent);font-family:'Syne Mono',monospace;font-size:.68rem;width:46px;flex-shrink:0">30 min</span><span style="color:var(--text2)">Find 10 new prospects (Google Maps or Apollo)</span></div>
+          <div style="display:flex;gap:10px;font-size:.8rem"><span style="color:var(--accent);font-family:'Syne Mono',monospace;font-size:.68rem;width:46px;flex-shrink:0">20 min</span><span style="color:var(--text2)">Generate + send 10 cold emails via Outreach tab</span></div>
+          <div style="display:flex;gap:10px;font-size:.8rem"><span style="color:var(--accent);font-family:'Syne Mono',monospace;font-size:.68rem;width:46px;flex-shrink:0">10 min</span><span style="color:var(--text2)">Follow up with 3-day prospects from Today tab</span></div>
+          <div style="display:flex;gap:10px;font-size:.8rem"><span style="color:var(--accent);font-family:'Syne Mono',monospace;font-size:.68rem;width:46px;flex-shrink:0">15 min</span><span style="color:var(--text2)">Categorize replies, update pipeline statuses</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROSPECTS -->
+    <div class="page" id="page-prospects">
+      <div class="search-wrap"><input class="si" id="p-search" placeholder="🔍 Search..." oninput="renderProspects()"></div>
+      <div class="fpills" id="p-filters">
+        <span class="fpill active" onclick="setFilt('p','',this)">All</span>
+        <span class="fpill" onclick="setFilt('p','new',this)">New</span>
+        <span class="fpill" onclick="setFilt('p','contacted',this)">Contacted</span>
+        <span class="fpill" onclick="setFilt('p','replied',this)">Replied</span>
+        <span class="fpill" onclick="setFilt('p','booked',this)">Booked</span>
+        <span class="fpill" onclick="setFilt('p','closed',this)">Closed</span>
+      </div>
+      <div class="clist" id="prospects-list"></div>
+    </div>
+
+    <!-- OUTREACH -->
+    <div class="page" id="page-outreach">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:14px">
+        <div class="fg"><label class="fl">Select Prospect</label><select class="fs" id="out-prospect" onchange="fillOutreach()"><option value="">— or fill manually —</option></select></div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Business Name</label><input class="fi" id="out-biz" placeholder="Smith Roofing"></div>
+          <div class="fg"><label class="fl">Owner Name</label><input class="fi" id="out-contact" placeholder="John"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Niche</label><select class="fs" id="out-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option></select></div>
+          <div class="fg"><label class="fl">Email Type</label><select class="fs" id="out-type"><option value="cold">Cold Outreach</option><option value="fu1">Follow-up #1 (Day 3)</option><option value="fu2">Follow-up #2 (Day 7)</option><option value="break">Breakup Email</option></select></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="genOutreach()">✨ Generate Email</button>
+      </div>
+      <div id="out-result" style="display:none">
+        <div class="sec-hd">
+          <div class="sec-t">Generated Email</div>
+          <div style="display:flex;gap:5px">
+            <button class="btn btn-ghost btn-sm" onclick="copyOut()">📋 Copy</button>
+            <button class="btn btn-success btn-sm" onclick="markContacted()">✓ Mark Sent</button>
+          </div>
+        </div>
+        <div class="ai-box" id="out-output"></div>
+        <div style="margin-top:9px">
+          <div class="sec-t" style="margin-bottom:8px;font-size:.82rem">Categorize Reply (when they respond)</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap" id="reply-cats">
+            <button class="btn btn-success btn-xs" onclick="logReply('interested')">🔥 Interested</button>
+            <button class="btn btn-yellow btn-xs" onclick="logReply('not_now')">⏰ Not Now</button>
+            <button class="btn btn-ghost btn-xs" onclick="logReply('wrong_person')">👤 Wrong Person</button>
+            <button class="btn btn-ghost btn-xs" onclick="logReply('more_info')">📋 Wants Info</button>
+            <button class="btn btn-danger btn-xs" onclick="logReply('unsubscribe')">🚫 Unsubscribe</button>
+            <button class="btn btn-purple btn-xs" onclick="logReply('referral')">🌟 Gave Referral</button>
+          </div>
+        </div>
+      </div>
+      <div class="sec-hd" style="margin-top:18px"><div class="sec-t">Outreach Log</div></div>
+      <div class="clist" id="out-log"></div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="fpills">
+        <span class="fpill active" onclick="setFilt('c','',this)">All</span>
+        <span class="fpill" onclick="setFilt('c','active',this)">Active</span>
+        <span class="fpill" onclick="setFilt('c','paused',this)">Paused</span>
+        <span class="fpill" onclick="setFilt('c','atrisk',this)">⚠️ At Risk</span>
+      </div>
+      <div class="clist" id="clients-list"></div>
+    </div>
+
+    <!-- WARMUP TRACKER -->
+    <div class="page" id="page-warmup">
+      <div class="tip-box"><strong>🔥 Why this matters:</strong> Sending cold emails from a fresh domain without warming it up = 90% spam rate. Each domain needs 14 days of warmup before you send campaigns from it.</div>
+      <div class="clist" id="warmup-list"></div>
+    </div>
+
+    <!-- CAMPAIGNS -->
+    <div class="page" id="page-campaigns">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:14px">
+        <div class="fg"><label class="fl">Client</label><select class="fs" id="camp-client"><option value="">— Select client —</option></select></div>
+        <div class="fg"><label class="fl">Target Audience</label><input class="fi" id="camp-audience" placeholder="e.g. homeowners in Dallas TX needing a new roof"></div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Goal</label><select class="fs" id="camp-goal"><option>Book a free consultation</option><option>Get a free quote</option><option>Schedule an inspection</option><option>Claim a seasonal discount</option></select></div>
+          <div class="fg"><label class="fl">Emails</label><select class="fs" id="camp-len"><option value="3">3 emails</option><option value="5" selected>5 emails</option></select></div>
+        </div>
+        <div class="fg"><label class="fl">Tone</label><select class="fs" id="camp-tone"><option>Professional & trustworthy</option><option>Friendly & conversational</option><option>Urgent & direct</option><option>Educational & helpful</option></select></div>
+        <button class="btn btn-primary btn-full" onclick="genCampaign()">🚀 Generate Sequence</button>
+      </div>
+      <div id="camp-output"><div class="ai-box"><div class="ai-ph"><div class="sp">🚀</div><p>Select a client and generate a full email sequence.</p></div></div></div>
+      <div id="camp-copy" style="display:none;margin-top:9px"><button class="btn btn-ghost btn-full" onclick="copyCamp()">📋 Copy All Emails</button></div>
+    </div>
+
+    <!-- MONTHLY REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="tip-box"><strong>📄 One-click client reports.</strong> Select a client, enter their stats, and generate a professional monthly report email ready to send.</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:14px">
+        <div class="fg"><label class="fl">Client</label><select class="fs" id="rep-client"><option value="">— Select client —</option></select></div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Emails Sent</label><input class="fi" id="rep-sent" type="number" placeholder="450" inputmode="numeric"></div>
+          <div class="fg"><label class="fl">Open Rate %</label><input class="fi" id="rep-opens" type="number" placeholder="38" inputmode="decimal"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Reply Rate %</label><input class="fi" id="rep-replies" type="number" placeholder="6" inputmode="decimal"></div>
+          <div class="fg"><label class="fl">Hot Leads Forwarded</label><input class="fi" id="rep-leads" type="number" placeholder="12" inputmode="numeric"></div>
+        </div>
+        <div class="fg"><label class="fl">Notable Results (optional)</label><input class="fi" id="rep-wins" placeholder="e.g. 2 jobs closed from our leads this month"></div>
+        <div class="fg"><label class="fl">Month</label><input class="fi" id="rep-month" type="month"></div>
+        <button class="btn btn-primary btn-full" onclick="genReport()">📄 Generate Monthly Report</button>
+      </div>
+      <div id="rep-output" style="display:none">
+        <div class="sec-hd"><div class="sec-t">Report Email</div><button class="btn btn-ghost btn-sm" onclick="copyRep()">📋 Copy</button></div>
+        <div class="ai-box" id="rep-result"></div>
+      </div>
+    </div>
+
+    <!-- AI REPLY ANALYZER -->
+    <div class="page" id="page-aireply">
+      <div class="tip-box"><strong>🤖 Paste any reply</strong> from a prospect and Claude will tell you the intent, how hot the lead is, and give you the exact response to send back.</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:14px">
+        <div class="fg"><label class="fl">Paste the Prospect's Reply</label><textarea class="fta" id="ar-reply" placeholder="Paste the email or message they sent you here..." style="min-height:100px"></textarea></div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Their Niche</label><select class="fs" id="ar-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option><option>Fitness</option></select></div>
+          <div class="fg"><label class="fl">Email Stage</label><select class="fs" id="ar-stage"><option>Cold email reply</option><option>Follow-up reply</option><option>Post-call follow-up</option></select></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="analyzeReply()">🤖 Analyze Reply</button>
+      </div>
+      <div id="ar-output" style="display:none">
+        <div id="ar-intent-card" style="margin-bottom:10px"></div>
+        <div class="sec-hd"><div class="sec-t">Suggested Response</div><button class="btn btn-ghost btn-sm" id="ar-copy-btn" onclick="copyAR()">📋 Copy</button></div>
+        <div class="ai-box" id="ar-result"></div>
+      </div>
+    </div>
+
+    <!-- SUBJECT LINE GENERATOR -->
+    <div class="page" id="page-subjectgen">
+      <div class="tip-box"><strong>✍️ Generate 5 subject line variants</strong> with AI scoring for each one. Save winners to your template library.</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:14px">
+        <div class="frow">
+          <div class="fg"><label class="fl">Niche</label><select class="fs" id="sl-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option><option>Fitness</option></select></div>
+          <div class="fg"><label class="fl">Email Type</label><select class="fs" id="sl-type"><option>Cold outreach</option><option>Follow-up</option><option>Breakup</option></select></div>
+        </div>
+        <div class="fg"><label class="fl">Angle / Hook (optional)</label><input class="fi" id="sl-angle" placeholder="e.g. local competitor reference, seasonal urgency, pain point..."></div>
+        <button class="btn btn-primary btn-full" onclick="genSubjects()">✍️ Generate 5 Subject Lines</button>
+      </div>
+      <div id="sl-output"></div>
+    </div>
+
+    <!-- A/B TESTS -->
+    <div class="page" id="page-abtests">
+      <div class="clist" id="ab-list"></div>
+    </div>
+
+    <!-- NICHE PERFORMANCE -->
+    <div class="page" id="page-niches">
+      <div class="tip-box"><strong>📈 Learn from your data.</strong> After sending outreach, this page shows which niches and reply types are working best so you can double down.</div>
+      <div id="niche-stats"></div>
+      <div class="sec-hd"><div class="sec-t">Reply Categories Breakdown</div></div>
+      <div id="reply-breakdown"></div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <div class="page" id="page-scripts">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('scr','obj',this)">Objections</div>
+        <div class="tab" onclick="switchTab('scr','close',this)">Closer</div>
+        <div class="tab" onclick="switchTab('scr','onboard',this)">Onboarding</div>
+      </div>
+      <div id="scr-obj">
+        <div class="frow" style="margin-bottom:9px">
+          <div class="fg"><label class="fl">Objection</label><select class="fs" id="obj-sel"><option>"I'm not interested"</option><option>"We already have someone"</option><option>"How do I know it works?"</option><option>"It's too expensive"</option><option>"I need to think about it"</option><option>"Send me info first"</option><option>"We don't have the budget"</option></select></div>
+          <div class="fg"><label class="fl">Niche</label><select class="fs" id="obj-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option></select></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="genScript('obj')" style="margin-bottom:11px">✨ Generate Response</button>
+        <div class="ai-box" id="obj-out"><div class="ai-ph"><div class="sp">🛡️</div><p>Generate a confident response to any objection.</p></div></div>
+      </div>
+      <div id="scr-close" style="display:none">
+        <div class="frow" style="margin-bottom:9px">
+          <div class="fg"><label class="fl">Business Name</label><input class="fi" id="close-biz" placeholder="Johnson Dental"></div>
+          <div class="fg"><label class="fl">Monthly Price</label><input class="fi" id="close-price" placeholder="$2,500/mo"></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="genScript('close')" style="margin-bottom:11px">✨ Generate Closing Script</button>
+        <div class="ai-box" id="close-out"><div class="ai-ph"><div class="sp">🤝</div><p>Word-for-word closing script.</p></div></div>
+      </div>
+      <div id="scr-onboard" style="display:none">
+        <div class="frow" style="margin-bottom:9px">
+          <div class="fg"><label class="fl">Business Name</label><input class="fi" id="onboard-biz" placeholder="Smith Roofing"></div>
+          <div class="fg"><label class="fl">Owner Name</label><input class="fi" id="onboard-name" placeholder="Mike"></div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="genScript('onboard')" style="margin-bottom:11px">✨ Generate Welcome Email</button>
+        <div class="ai-box" id="onboard-out"><div class="ai-ph"><div class="sp">🎉</div><p>Professional onboarding email.</p></div></div>
+      </div>
+    </div>
+
+    <!-- TEMPLATES -->
+    <div class="page" id="page-templates">
+      <div class="tabs" id="tmpl-tabs">
+        <div class="tab active" onclick="switchTab('tmpl','subject',this)">Subject Lines</div>
+        <div class="tab" onclick="switchTab('tmpl','body',this)">Email Bodies</div>
+        <div class="tab" onclick="switchTab('tmpl','sequence',this)">Full Sequences</div>
+      </div>
+      <div id="tmpl-subject" class="clist"></div>
+      <div id="tmpl-body" class="clist" style="display:none"></div>
+      <div id="tmpl-sequence" class="clist" style="display:none"></div>
+    </div>
+
+    <!-- INVOICES -->
+    <div class="page" id="page-invoices">
+      <div class="sgrid">
+        <div class="sc gr"><div class="sv" id="inv-paid">0</div><div class="sl">Paid This Month</div></div>
+        <div class="sc rd"><div class="sv" id="inv-overdue">0</div><div class="sl">Overdue</div></div>
+      </div>
+      <div class="clist" id="inv-list"></div>
+    </div>
+
+    <!-- REFERRALS -->
+    <div class="page" id="page-referrals">
+      <div class="sgrid">
+        <div class="sc gr"><div class="sv" id="ref-total">0</div><div class="sl">Total Referrals</div></div>
+        <div class="sc ye"><div class="sv" id="ref-closed">0</div><div class="sl">Converted</div></div>
+      </div>
+      <div class="clist" id="ref-list"></div>
+    </div>
+
+    <!-- GOALS -->
+    <div class="page" id="page-goals">
+      <div class="tip-box"><strong>🏆 Weekly activity goals.</strong> Consistent inputs = consistent results. Track your weekly numbers here so you know if you're on pace.</div>
+      <div id="goals-content"></div>
+    </div>
+
+    <!-- PLAYBOOK -->
+    <div class="page" id="page-playbook"><div id="playbook-content"></div></div>
+
+    <!-- PROJECTIONS -->
+    <div class="page" id="page-projections">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:13px">
+        <div class="prog-wrap"><div class="prog-top"><span>Prospects / Week</span><span class="prog-val" id="pv1">20</span></div><input type="range" min="5" max="100" value="20" id="sl1" oninput="updateProj()"></div>
+        <div class="prog-wrap"><div class="prog-top"><span>Reply Rate</span><span class="prog-val" id="pv2">15%</span></div><input type="range" min="3" max="40" value="15" id="sl2" oninput="updateProj()"></div>
+        <div class="prog-wrap"><div class="prog-top"><span>Close Rate (of replies)</span><span class="prog-val" id="pv3">30%</span></div><input type="range" min="5" max="70" value="30" id="sl3" oninput="updateProj()"></div>
+        <div class="prog-wrap"><div class="prog-top"><span>Average Retainer</span><span class="prog-val" id="pv4">$2,500</span></div><input type="range" min="500" max="5000" step="250" value="2500" id="sl4" oninput="updateProj()"></div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;margin-bottom:13px">
+        <div style="font-size:.7rem;color:var(--text2);margin-bottom:3px">Projected Monthly Revenue (after 30 days)</div>
+        <div class="sv gr" id="proj-mrr" style="font-size:2.2rem;margin-bottom:10px">$0</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px;text-align:center"><div style="font-weight:700;font-size:.9rem;color:var(--text)" id="proj-replies">0</div><div style="font-size:.66rem;color:var(--text2);margin-top:2px">Replies/mo</div></div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px;text-align:center"><div style="font-weight:700;font-size:.9rem;color:var(--text)" id="proj-calls">0</div><div style="font-size:.66rem;color:var(--text2);margin-top:2px">Calls/mo</div></div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px;text-align:center"><div style="font-weight:700;font-size:.9rem;color:var(--text)" id="proj-closes">0</div><div style="font-size:.66rem;color:var(--text2);margin-top:2px">Closes/mo</div></div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin-bottom:11px">🗓️ 90-Day Plan</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;gap:11px"><div style="font-family:'Syne Mono',monospace;font-size:.68rem;color:var(--accent);width:44px;flex-shrink:0;padding-top:1px">Day 1-14</div><div style="font-size:.8rem;color:var(--text2)">Set up sending domains, warm up inboxes. Add 40 prospects. Send first 20 cold emails.</div></div>
+          <div style="display:flex;gap:11px"><div style="font-family:'Syne Mono',monospace;font-size:.68rem;color:var(--yellow);width:44px;flex-shrink:0;padding-top:1px">Day 15-30</div><div style="font-size:.8rem;color:var(--text2)">Ramp to 10 emails/day. First replies. Book 2–3 calls. Close first client ($2K–3K/mo).</div></div>
+          <div style="display:flex;gap:11px"><div style="font-family:'Syne Mono',monospace;font-size:.68rem;color:var(--orange);width:44px;flex-shrink:0;padding-top:1px">Day 31-60</div><div style="font-size:.8rem;color:var(--text2)">Scale to 20 emails/day. 2–3 more clients. $5K–8K MRR. Build campaigns for each.</div></div>
+          <div style="display:flex;gap:11px"><div style="font-family:'Syne Mono',monospace;font-size:.68rem;color:var(--green);width:44px;flex-shrink:0;padding-top:1px">Day 61-90</div><div style="font-size:.8rem;color:var(--text2)">4–5 clients. $10K+ MRR. Systemize. Ask every client for a referral.</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content -->
+</main>
+</div><!-- end app -->
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <div class="bnav-inner">
+    <div class="bni active" onclick="nav('today')"><span class="bni-icon">☀️</span>Today<span class="bni-badge" id="bn-badge" style="display:none">0</span></div>
+    <div class="bni" onclick="nav('prospects')"><span class="bni-icon">🎯</span>Prospects</div>
+    <div class="bni" onclick="nav('outreach')"><span class="bni-icon">✉️</span>Outreach</div>
+    <div class="bni" onclick="nav('clients')"><span class="bni-icon">🤝</span>Clients</div>
+    <div class="bni" onclick="nav('more')"><span class="bni-icon">⋯</span>More</div>
+  </div>
+</nav>
+<button class="fab" id="fab" onclick="fabAct()">+</button>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-more">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mhdr"><div class="mtitle">Menu</div><button class="mclose" onclick="closeM('modal-more')">✕</button></div>
+    <div class="mbody" style="display:flex;flex-direction:column;gap:6px;padding-bottom:18px">
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('dashboard')">📊 Dashboard</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('finder')">🔍 Lead Finder</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('warmup')">🔥 Warmup Tracker</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('campaigns')">🚀 Campaigns</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('reports')">📄 Monthly Reports</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('aireply')">🤖 AI Reply Analyzer</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('subjectgen')">✍️ Subject Lines</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('scripts')">📝 Scripts</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('templates')">💾 Templates</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('abtests')">🧪 A/B Tests</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('niches')">📈 Niche Performance</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('invoices')">🧾 Invoices</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('referrals')">🌟 Referrals</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('goals')">🏆 Goals</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('playbook')">📖 Client Playbook</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:13px;padding:13px" onclick="closeM('modal-more');nav('projections')">📐 Projections</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROSPECT MODAL -->
+<div class="modal-overlay" id="modal-prospect">
+  <div class="modal"><div class="mhandle"></div>
+    <div class="mhdr"><div class="mtitle">Add Prospect</div><button class="mclose" onclick="closeM('modal-prospect')">✕</button></div>
+    <div class="mbody">
+      <div class="fg"><label class="fl">Business Name *</label><input class="fi" id="pf-name" placeholder="Green Valley Dental"></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Niche</label><select class="fs" id="pf-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option><option>Other</option></select></div>
+        <div class="fg"><label class="fl">Location</label><input class="fi" id="pf-loc" placeholder="Austin, TX"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Owner Name</label><input class="fi" id="pf-contact" placeholder="Sarah Johnson"></div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="pf-email" type="email" placeholder="sarah@biz.com"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Phone</label><input class="fi" id="pf-phone" type="tel" placeholder="(555) 000-0000"></div>
+        <div class="fg"><label class="fl">Website</label><input class="fi" id="pf-web" placeholder="theirbiz.com"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Source</label><select class="fs" id="pf-source"><option>Google Maps</option><option>Apollo.io</option><option>Facebook Ads Library</option><option>LinkedIn</option><option>Yelp</option><option>Referral</option><option>Other</option></select></div>
+        <div class="fg"><label class="fl">Lead Quality (1–10)</label><input class="fi" id="pf-score" type="number" min="1" max="10" placeholder="Auto-scored"></div>
+      </div>
+      <div style="background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--r-sm);padding:9px;margin-bottom:11px;font-size:.76rem;color:var(--text2)">
+        <strong style="color:var(--accent)">Quality scoring guide:</strong> Has website (+2) · Running ads (+2) · 10–100 reviews (+2) · High LTV niche (+2) · Has contact name (+1) · Has email (+1)
+      </div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="pf-notes" placeholder="Any info about this prospect..." style="min-height:55px"></textarea></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeM('modal-prospect')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveProspect()">Add Prospect</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="modal-overlay" id="modal-client">
+  <div class="modal"><div class="mhandle"></div>
+    <div class="mhdr"><div class="mtitle">Add Client</div><button class="mclose" onclick="closeM('modal-client')">✕</button></div>
+    <div class="mbody">
+      <div class="fg"><label class="fl">Business Name *</label><input class="fi" id="cf-name" placeholder="Johnson Roofing LLC"></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Niche</label><select class="fs" id="cf-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Other</option></select></div>
+        <div class="fg"><label class="fl">Retainer ($/mo) *</label><input class="fi" id="cf-retainer" type="number" placeholder="2500" inputmode="numeric"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Owner Name</label><input class="fi" id="cf-contact" placeholder="Mike Johnson"></div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="cf-email" type="email" placeholder="mike@biz.com"></div>
+      </div>
+      <div class="fg"><label class="fl">Start Date</label><input class="fi" id="cf-start" type="date"></div>
+      <div class="fg"><label class="fl">Notes / Goals</label><textarea class="fta" id="cf-notes" placeholder="Campaign goals, target audience..." style="min-height:55px"></textarea></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeM('modal-client')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveClient()">Add Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- WARMUP MODAL -->
+<div class="modal-overlay" id="modal-warmup">
+  <div class="modal"><div class="mhandle"></div>
+    <div class="mhdr"><div class="mtitle">Add Domain to Warmup</div><button class="mclose" onclick="closeM('modal-warmup')">✕</button></div>
+    <div class="mbody">
+      <div class="fg"><label class="fl">Domain *</label><input class="fi" id="wu-domain" placeholder="getsmithroofing.com"></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Client</label><select class="fs" id="wu-client"><option value="">— Link to client —</option></select></div>
+        <div class="fg"><label class="fl">Warmup Start Date</label><input class="fi" id="wu-start" type="date"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Target Daily Volume</label><input class="fi" id="wu-target" type="number" placeholder="40" inputmode="numeric"></div>
+        <div class="fg"><label class="fl">Warmup Tool</label><select class="fs" id="wu-tool"><option>Instantly.ai</option><option>Lemwarm</option><option>Smartlead</option><option>Manual</option></select></div>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeM('modal-warmup')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveWarmup()">Start Warmup</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE MODAL -->
+<div class="modal-overlay" id="modal-template">
+  <div class="modal"><div class="mhandle"></div>
+    <div class="mhdr"><div class="mtitle">Save Template</div><button class="mclose" onclick="closeM('modal-template')">✕</button></div>
+    <div class="mbody">
+      <div class="frow">
+        <div class="fg"><label class="fl">Type</label><select class="fs" id="tf-type"><option value="subject">Subject Line</option><option value="body">Email Body</option><option value="sequence">Full Sequence</option></select></div>
+        <div class="fg"><label class="fl">Niche</label><select class="fs" id="tf-niche"><option>Any</option><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Template Name *</label><input class="fi" id="tf-name" placeholder="Pain point opener — Roofing"></div>
+      <div class="fg"><label class="fl">Content *</label><textarea class="fta" id="tf-content" placeholder="Paste subject line, email, or sequence here..." style="min-height:110px"></textarea></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Open Rate %</label><input class="fi" id="tf-open" type="number" placeholder="42" inputmode="decimal"></div>
+        <div class="fg"><label class="fl">Reply Rate %</label><input class="fi" id="tf-reply" type="number" placeholder="8" inputmode="decimal"></div>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeM('modal-template')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveTemplate()">Save Template</button>
+    </div>
+  </div>
+</div>
+
+<!-- AB TEST MODAL -->
+<div class="modal-overlay" id="modal-ab">
+  <div class="modal"><div class="mhandle"></div>
+    <div class="mhdr"><div class="mtitle">New A/B Test</div><button class="mclose" onclick="closeM('modal-ab')">✕</button></div>
+    <div class="mbody">
+      <div class="frow">
+        <div class="fg"><label class="fl">Test Name *</label><input class="fi" id="ab-name" placeholder="Subject line — Roofing cold"></div>
+        <div class="fg"><label class="fl">Niche</label><select class="fs" id="ab-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Variant A</label><textarea class="fta" id="ab-a" placeholder="First subject line or email angle..." style="min-height:65px"></textarea></div>
+      <div class="fg"><label class="fl">Variant B</label><textarea class="fta" id="ab-b" placeholder="Second subject line or email angle..." style="min-height:65px"></textarea></div>
+      <div class="fg"><label class="fl">Testing For</label><select class="fs" id="ab-metric"><option>Subject line open rate</option><option>Email body reply rate</option><option>Full sequence reply rate</option></select></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeM('modal-ab')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveAB()">Start Test</button>
+    </div>
+  </div>
+</div>
+
+<!-- INVOICE MODAL -->
+<div class="modal-overlay" id="modal-invoice">
+  <div class="modal"><div class="mhandle"></div>
+    <div class="mhdr"><div class="mtitle">Log Invoice</div><button class="mclose" onclick="closeM('modal-invoice')">✕</button></div>
+    <div class="mbody">
+      <div class="fg"><label class="fl">Client *</label><select class="fs" id="inv-client"><option value="">— Select client —</option></select></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Amount ($) *</label><input class="fi" id="inv-amount" type="number" placeholder="2500" inputmode="numeric"></div>
+        <div class="fg"><label class="fl">Due Date *</label><input class="fi" id="inv-due" type="date"></div>
+      </div>
+      <div class="fg"><label class="fl">Status</label><select class="fs" id="inv-status"><option value="pending">Pending</option><option value="paid">Paid</option><option value="overdue">Overdue</option></select></div>
+      <div class="fg"><label class="fl">Notes</label><input class="fi" id="inv-notes" placeholder="Month 2 retainer"></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeM('modal-invoice')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveInvoice()">Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- REFERRAL MODAL -->
+<div class="modal-overlay" id="modal-referral">
+  <div class="modal"><div class="mhandle"></div>
+    <div class="mhdr"><div class="mtitle">Log Referral</div><button class="mclose" onclick="closeM('modal-referral')">✕</button></div>
+    <div class="mbody">
+      <div class="fg"><label class="fl">Referred By *</label><input class="fi" id="rf-source" placeholder="Mike Johnson — Smith Roofing"></div>
+      <div class="fg"><label class="fl">Referred Prospect *</label><input class="fi" id="rf-prospect" placeholder="Sarah Lee — Austin Dental"></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Niche</label><select class="fs" id="rf-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option><option>Other</option></select></div>
+        <div class="fg"><label class="fl">Status</label><select class="fs" id="rf-status"><option value="intro">Intro Made</option><option value="call">Call Booked</option><option value="closed">Closed</option><option value="lost">Lost</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="rf-notes" placeholder="Any context..." style="min-height:55px"></textarea></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeM('modal-referral')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveReferral()">Save Referral</button>
+    </div>
+  </div>
+</div>
+
+<!-- GOALS MODAL -->
+<div class="modal-overlay" id="modal-goals">
+  <div class="modal"><div class="mhandle"></div>
+    <div class="mhdr"><div class="mtitle">Set Weekly Goals</div><button class="mclose" onclick="closeM('modal-goals')">✕</button></div>
+    <div class="mbody">
+      <div class="frow">
+        <div class="fg"><label class="fl">Prospects/Week</label><input class="fi" id="g-prospects" type="number" placeholder="50" inputmode="numeric"></div>
+        <div class="fg"><label class="fl">Emails Sent/Week</label><input class="fi" id="g-emails" type="number" placeholder="100" inputmode="numeric"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Calls Booked/Week</label><input class="fi" id="g-calls" type="number" placeholder="5" inputmode="numeric"></div>
+        <div class="fg"><label class="fl">MRR Goal ($)</label><input class="fi" id="g-mrr" type="number" placeholder="10000" inputmode="numeric"></div>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeM('modal-goals')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" onclick="saveGoals()">Save Goals</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.app -->
+</div><!-- /#main-app -->
+
+<div class="toast" id="toast"></div>
+
+<!-- Loading overlay (shown while fetching from Supabase) -->
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="font-size:2rem">⚡</div>
+  <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--text)">Loading your data...</div>
+  <div style="font-size:.8rem;color:var(--text3)">Connecting to Supabase</div>
+</div>
+
+<!-- Auth screen -->
+<div id="auth-screen" style="display:flex;position:fixed;inset:0;background:var(--bg);z-index:9998;align-items:center;justify-content:center;padding:20px">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:32px 28px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--text);margin-bottom:4px">LeadGen AI</div>
+      <div style="font-size:.8rem;color:var(--text3)">Email Business System</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:.73rem;color:var(--text3);display:block;margin-bottom:5px">Email</label>
+        <input id="auth-email" type="email" placeholder="you@email.com" style="width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:.88rem;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:.73rem;color:var(--text3);display:block;margin-bottom:5px">Password</label>
+        <input id="auth-password" type="password" placeholder="••••••••" style="width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:.88rem;box-sizing:border-box" onkeydown="if(event.key==='Enter')signIn()">
+      </div>
+      <div id="auth-error" style="display:none;font-size:.78rem;padding:8px 10px;border-radius:var(--r-sm)"></div>
+      <button id="btn-signin" class="btn btn-primary" style="width:100%;padding:11px;font-size:.9rem;margin-top:4px" onclick="signIn()">Sign In</button>
+      <button id="btn-signup" class="btn btn-ghost" style="width:100%;padding:11px;font-size:.9rem;" onclick="signUp()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ═══════════════════════════════════════════
+// SUPABASE CONFIG
+// Get these from: supabase.com → your project
+// → Project Settings → API
+// ═══════════════════════════════════════════
+const SUPABASE_URL = 'https://yyqbzwmtwfvbnwfmaebi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5cWJ6d210d2Z2Ym53Zm1hZWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTYyMDcsImV4cCI6MjA4OTY3MjIwN30.IeHVj0Wh4VVFaVaZp1hb9Vsq_nwWrd-Ce_eqxJdSF8I';
+
+const _SB_READY = true;
+const _sb = _SB_READY ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const BLANK = {
+  prospects:[],clients:[],outreachLog:[],checklist:{},
+  templates:[],abtests:[],invoices:[],referrals:[],
+  warmups:[],replyCats:[],reports:[],
+  goals:{prospects:50,emails:100,calls:5,mrr:10000},
+  weeklyActivity:{},lastOutProspectId:null
+};
+let S = JSON.parse(JSON.stringify(BLANK));
+let _userId = null;
+
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+async function initAuth(){
+  if(!_SB_READY){
+    // Supabase not configured yet — show setup message on auth screen
+    showLogin();
+    document.getElementById('auth-error').textContent='⚠️ Add your Supabase URL and key to app.js to enable login & sync. Until then, use Sign In below to run in local-only mode.';
+    document.getElementById('auth-error').style.color='var(--yellow)';
+    document.getElementById('auth-error').style.display='block';
+    document.getElementById('btn-signin').textContent='Continue (Local Mode)';
+    document.getElementById('btn-signin').onclick=()=>{showApp();fbLoad();renderAll()};
+    return;
+  }
+  const {data:{session}} = await _sb.auth.getSession();
+  if(session){_userId=session.user.id;showApp();await loadAll()}
+  else showLogin();
+  _sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'){_userId=session.user.id;showApp();await loadAll()}
+    else if(event==='SIGNED_OUT'){_userId=null;S=JSON.parse(JSON.stringify(BLANK));showLogin()}
+  });
+}
+
+async function signIn(){
+  if(!_SB_READY){showApp();fbLoad();renderAll();return}
+  const email=document.getElementById('auth-email').value.trim();
+  const password=document.getElementById('auth-password').value;
+  if(!email||!password){authMsg('Enter your email and password');return}
+  setAuthLoading(true);
+  const {error}=await _sb.auth.signInWithPassword({email,password});
+  setAuthLoading(false);
+  if(error)authMsg(error.message);
+}
+
+async function signUp(){
+  if(!_SB_READY){authMsg('Add your Supabase credentials to app.js first to enable accounts.');return}
+  const email=document.getElementById('auth-email').value.trim();
+  const password=document.getElementById('auth-password').value;
+  if(!email||!password){authMsg('Enter your email and password');return}
+  if(password.length<6){authMsg('Password must be at least 6 characters');return}
+  setAuthLoading(true);
+  const {error}=await _sb.auth.signUp({email,password});
+  setAuthLoading(false);
+  if(error)authMsg(error.message);
+  else authMsg('✅ Check your email to confirm your account, then sign in.',true);
+}
+
+async function signOut(){if(_sb)await _sb.auth.signOut();else{S=JSON.parse(JSON.stringify(BLANK));showLogin()};toast('👋 Signed out')}
+
+function showApp(){document.getElementById('auth-screen').style.display='none';document.getElementById('main-app').style.display='flex'}
+function showLogin(){document.getElementById('auth-screen').style.display='flex';document.getElementById('main-app').style.display='none'}
+function authMsg(msg,ok=false){const el=document.getElementById('auth-error');el.textContent=msg;el.style.color=ok?'var(--green)':'var(--red)';el.style.display='block'}
+function setAuthLoading(on){['btn-signin','btn-signup'].forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=on;if(id==='btn-signin')el.textContent=on?'Loading...':'Sign In'}})}
+
+function switchAuthMode(mode){
+  const isSignup=mode==='signup';
+  document.getElementById('auth-title').textContent=isSignup?'Create Account':'Sign In';
+  document.getElementById('btn-signin').style.display=isSignup?'none':'block';
+  document.getElementById('btn-signup').style.display=isSignup?'block':'none';
+  document.getElementById('auth-switch-text').innerHTML=isSignup
+    ?'Already have an account? <span onclick="switchAuthMode(\'signin\')" style="color:var(--accent);cursor:pointer">Sign in</span>'
+    :'No account? <span onclick="switchAuthMode(\'signup\')" style="color:var(--accent);cursor:pointer">Create one</span>';
+  document.getElementById('auth-error').style.display='none';
+}
+
+// ═══════════════════════════════════════════
+// LOAD ALL DATA FROM SUPABASE
+// ═══════════════════════════════════════════
+async function loadAll(){
+  showLoader(true);
+  try{
+    const [p,c,ol,w,t,ab,inv,ref,rc,rep,set]=await Promise.all([
+      _sb.from('prospects').select('*').eq('user_id',_userId),
+      _sb.from('clients').select('*').eq('user_id',_userId),
+      _sb.from('outreach_log').select('*').eq('user_id',_userId).order('date',{ascending:false}),
+      _sb.from('warmups').select('*').eq('user_id',_userId),
+      _sb.from('templates').select('*').eq('user_id',_userId),
+      _sb.from('abtests').select('*').eq('user_id',_userId),
+      _sb.from('invoices').select('*').eq('user_id',_userId),
+      _sb.from('referrals').select('*').eq('user_id',_userId),
+      _sb.from('reply_cats').select('*').eq('user_id',_userId),
+      _sb.from('reports_sent').select('*').eq('user_id',_userId),
+      _sb.from('user_settings').select('*').eq('user_id',_userId).single()
+    ]);
+    S.prospects=(p.data||[]).map(r=>({id:r.id,name:r.name,niche:r.niche,location:r.location,contact:r.contact,email:r.email,phone:r.phone,website:r.website,source:r.source,notes:r.notes,status:r.status,score:r.score,added:r.added,lastContacted:r.last_contacted}));
+    S.clients=(c.data||[]).map(r=>({id:r.id,name:r.name,niche:r.niche,contact:r.contact,email:r.email,retainer:r.retainer,start:r.start_date,notes:r.notes,status:r.status,added:r.added}));
+    S.outreachLog=(ol.data||[]).map(r=>({id:r.id,biz:r.biz,niche:r.niche,contact:r.contact,type:r.type,status:r.status,prospectId:r.prospect_id,date:r.date}));
+    S.warmups=(w.data||[]).map(r=>({id:r.id,domain:r.domain,clientId:r.client_id,clientName:r.client_name,start:r.start_date,target:r.target,tool:r.tool,notified:r.notified}));
+    S.templates=(t.data||[]).map(r=>({id:r.id,name:r.name,content:r.content,type:r.type,niche:r.niche,openRate:r.open_rate,replyRate:r.reply_rate,notes:r.notes,saved:r.saved}));
+    S.abtests=(ab.data||[]).map(r=>({id:r.id,name:r.name,niche:r.niche,metric:r.metric,a:r.variant_a,b:r.variant_b,aSent:r.a_sent,aReplies:r.a_replies,bSent:r.b_sent,bReplies:r.b_replies,status:r.status,winner:r.winner,created:r.created}));
+    S.invoices=(inv.data||[]).map(r=>({id:r.id,clientId:r.client_id,clientName:r.client_name,amount:r.amount,due:r.due_date,status:r.status,notes:r.notes,paidDate:r.paid_date,created:r.created}));
+    S.referrals=(ref.data||[]).map(r=>({id:r.id,source:r.source,prospect:r.prospect,niche:r.niche,status:r.status,notes:r.notes,date:r.date}));
+    S.replyCats=rc.data||[];
+    S.reports=(rep.data||[]).map(r=>({id:r.id,clientId:r.client_id,month:r.month,date:r.date}));
+    if(set.data){S.goals=set.data.goals||BLANK.goals;S.checklist=set.data.checklist||{};S.weeklyActivity=set.data.weekly_activity||{};S.lastOutProspectId=set.data.last_out_prospect_id}
+  }catch(e){console.error('Load error:',e);fbLoad()}
+  showLoader(false);
+  renderAll();
+}
+
+function fbLoad(){try{const d=localStorage.getItem('lgs5');if(d)S={...BLANK,...JSON.parse(d)};toast('⚠️ Offline — using local data')}catch(e){}}
+function fbSave(){try{localStorage.setItem('lgs5',JSON.stringify(S))}catch(e){}}
+
+// ═══════════════════════════════════════════
+// SUPABASE WRITE HELPERS
+// ═══════════════════════════════════════════
+async function db(table,row){
+  const {error}=await _sb.from(table).upsert({...row,user_id:_userId});
+  if(error){console.error(`Save ${table}:`,error);fbSave()}
+}
+async function dbDel(table,id){
+  const {error}=await _sb.from(table).delete().eq('id',id).eq('user_id',_userId);
+  if(error)console.error(`Delete ${table}:`,error);
+}
+
+async function dbProspect(p){await db('prospects',{id:p.id,name:p.name,niche:p.niche,location:p.location,contact:p.contact,email:p.email,phone:p.phone,website:p.website,source:p.source,notes:p.notes,status:p.status,score:p.score,added:p.added,last_contacted:p.lastContacted})}
+async function dbClient(c){await db('clients',{id:c.id,name:c.name,niche:c.niche,contact:c.contact,email:c.email,retainer:c.retainer,start_date:c.start,notes:c.notes,status:c.status,added:c.added})}
+async function dbOutreach(o){await db('outreach_log',{id:o.id,biz:o.biz,niche:o.niche,contact:o.contact,type:o.type,status:o.status,prospect_id:o.prospectId,date:o.date})}
+async function dbWarmup(w){await db('warmups',{id:w.id,domain:w.domain,client_id:w.clientId,client_name:w.clientName,start_date:w.start,target:w.target,tool:w.tool,notified:w.notified})}
+async function dbTemplate(t){await db('templates',{id:t.id,name:t.name,content:t.content,type:t.type,niche:t.niche,open_rate:t.openRate,reply_rate:t.replyRate,notes:t.notes,saved:t.saved})}
+async function dbABTest(t){await db('abtests',{id:t.id,name:t.name,niche:t.niche,metric:t.metric,variant_a:t.a,variant_b:t.b,a_sent:t.aSent,a_replies:t.aReplies,b_sent:t.bSent,b_replies:t.bReplies,status:t.status,winner:t.winner,created:t.created})}
+async function dbInvoice(i){await db('invoices',{id:i.id,client_id:i.clientId,client_name:i.clientName,amount:i.amount,due_date:i.due,status:i.status,notes:i.notes,paid_date:i.paidDate,created:i.created})}
+async function dbReferral(r){await db('referrals',{id:r.id,source:r.source,prospect:r.prospect,niche:r.niche,status:r.status,notes:r.notes,date:r.date})}
+async function dbReplyCat(r){await db('reply_cats',{id:r.id,prospect_id:r.prospectId,cat:r.cat,niche:r.niche,date:r.date})}
+async function dbReport(r){await db('reports_sent',{id:r.id,client_id:r.clientId,month:r.month,date:r.date})}
+async function dbSettings(){await db('user_settings',{user_id:_userId,goals:S.goals,checklist:S.checklist,weekly_activity:S.weeklyActivity,last_out_prospect_id:S.lastOutProspectId,updated:new Date().toISOString()})}
+
+// ═══════════════════════════════════════════
+// LOADER
+// ═══════════════════════════════════════════
+function showLoader(on){const el=document.getElementById('loading-overlay');if(el)el.style.display=on?'flex':'none'}
+function renderAll(){renderFinder();renderToday();renderDashboard();updateBadges();updateProj()}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+const PAGE_CFG={
+  today:{title:"Today's Tasks",sub:"What needs your attention"},
+  dashboard:{title:"Dashboard",sub:"Business overview"},
+  finder:{title:"Lead Finder",sub:"Where & how to find prospects"},
+  prospects:{title:"Prospects",sub:"Your target businesses",fab:()=>openM('modal-prospect')},
+  outreach:{title:"Outreach",sub:"Generate & track cold emails"},
+  clients:{title:"Clients",sub:"Active retainer clients",fab:()=>openM('modal-client')},
+  warmup:{title:"Warmup Tracker",sub:"Domain warmup progress",fab:()=>{populateWarmupClientSel();openM('modal-warmup')}},
+  campaigns:{title:"Campaigns",sub:"AI email sequences for clients"},
+  reports:{title:"Monthly Reports",sub:"One-click client report generator"},
+  aireply:{title:"AI Reply Analyzer",sub:"Paste a reply → get intent + response"},
+  subjectgen:{title:"Subject Line Generator",sub:"5 AI-scored variants per run"},
+  abtests:{title:"A/B Tests",sub:"Track what's working",fab:()=>openM('modal-ab')},
+  niches:{title:"Niche Performance",sub:"Which niches are converting best"},
+  scripts:{title:"Script Library",sub:"AI scripts for every situation"},
+  templates:{title:"Template Library",sub:"Your saved winning emails",fab:()=>openM('modal-template')},
+  invoices:{title:"Invoice Tracker",sub:"Payments, due dates & overdue",fab:()=>{populateInvSel();openM('modal-invoice')}},
+  referrals:{title:"Referrals",sub:"Track who referred who",fab:()=>openM('modal-referral')},
+  goals:{title:"Goal Tracker",sub:"Weekly activity targets"},
+  playbook:{title:"Client Playbook",sub:"Exactly what to do after closing"},
+  projections:{title:"Revenue Projections",sub:"Model your income potential"},
+  more:{title:"More",sub:""}
+};
+
+let curPage='today';
+const filters={p:'',c:''};
+
+function nav(page){
+  if(page==='more'){openM('modal-more');return}
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni,.bni').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('page-'+page);if(el)el.classList.add('active');
+  document.querySelectorAll(`[onclick*="nav('${page}')"]`).forEach(n=>n.classList.add('active'));
+  const cfg=PAGE_CFG[page]||{};
+  document.getElementById('tb-title').textContent=cfg.title||page;
+  document.getElementById('tb-sub').textContent=cfg.sub||'';
+  const fab=document.getElementById('fab');
+  if(cfg.fab&&window.innerWidth<=768)fab.style.display='flex';else fab.style.display='none';
+  curPage=page;
+  const renders={today:renderToday,dashboard:renderDashboard,prospects:()=>{renderProspects();populateOutSel()},outreach:()=>{populateOutSel();renderOutLog()},clients:renderClients,warmup:renderWarmup,campaigns:populateCampSel,reports:populateRepSel,abtests:renderAB,niches:renderNiches,templates:()=>renderTemplates('subject'),invoices:()=>{renderInvoices();updateInvBadge()},referrals:renderReferrals,goals:renderGoals,playbook:renderPlaybook,projections:updateProj};
+  if(renders[page])renders[page]();
+}
+
+function fabAct(){const cfg=PAGE_CFG[curPage];if(cfg&&cfg.fab)cfg.fab()}
+function setFilt(t,v,el){filters[t]=v;el.closest('.fpills').querySelectorAll('.fpill').forEach(p=>p.classList.remove('active'));el.classList.add('active');if(t==='p')renderProspects();if(t==='c')renderClients()}
+function openM(id){document.getElementById(id).classList.add('open')}
+function closeM(id){document.getElementById(id).classList.remove('open')}
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}))});
+
+let _tt;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2600)}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function daysSince(iso){if(!iso)return 999;return Math.floor((Date.now()-new Date(iso))/86400000)}
+function monthsSince(iso){if(!iso)return 0;return Math.floor(daysSince(iso)/30)}
+function nextInvoice(start){if(!start)return'—';const d=new Date(start);const now=new Date();while(d<=now)d.setMonth(d.getMonth()+1);return fmtDate(d)}
+function sbadge(s){const m={new:'b-bl',contacted:'b-ye',replied:'b-or',booked:'b-gr',closed:'b-pu',active:'b-gr',paused:'b-or',generated:'b-bl',interested:'b-gr',not_now:'b-ye',wrong_person:'b-gy',more_info:'b-bl',unsubscribe:'b-rd',referral:'b-pu'};return`<span class="badge ${m[s]||'b-gy'}">${s.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>`}
+
+async function ai(prompt,max=1000){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:max,messages:[{role:'user',content:prompt}]})});const d=await r.json();return d.content?.[0]?.text||'Error.'}
+function aiLoad(id){const el=document.getElementById(id);if(el){el.innerHTML='';el.classList.add('ai-loading')}}
+function aiDone(id,text){const el=document.getElementById(id);if(el){el.classList.remove('ai-loading');el.textContent=text}}
+
+// ═══════════════════════════════════════════
+// HEALTH & SCORING
+// ═══════════════════════════════════════════
+function clientHealth(c){
+  let s=100;const months=monthsSince(c.start);
+  if(months<2)s-=10;
+  if((S.invoices||[]).find(i=>i.clientId===c.id&&i.status==='overdue'))s-=35;
+  const tm=new Date().toISOString().slice(0,7);
+  if(!(S.reports||[]).find(r=>r.clientId===c.id&&r.month===tm)&&months>0)s-=15;
+  if(months>=3)s+=10;if(months>=6)s+=10;
+  s=Math.max(0,Math.min(100,s));
+  if(s>=75)return{score:s,label:'Healthy',color:'var(--green)'};
+  if(s>=45)return{score:s,label:'Watch',color:'var(--yellow)'};
+  return{score:s,label:'At Risk',color:'var(--red)'};
+}
+
+function leadScore(p){
+  let s=0;if(p.website)s+=2;if(p.email)s+=1;if(p.contact)s+=1;
+  if(['Roofing','Real Estate','Legal','Mortgage','Dental','HVAC'].includes(p.niche))s+=2;
+  if(p.source==='Facebook Ads Library')s+=2;if(p.source==='Apollo.io')s+=1;
+  return Math.min(10,s);
+}
+
+// ═══════════════════════════════════════════
+// TODAY
+// ═══════════════════════════════════════════
+const DAILY_TASKS=[
+  {id:'dt1',text:'Find 10 new prospects',meta:'Google Maps or Apollo.io',time:'30 min'},
+  {id:'dt2',text:'Generate & send 10 cold emails',meta:'Outreach tab',time:'20 min'},
+  {id:'dt3',text:'Follow up with 3-day prospects',meta:'See overdue list above',time:'10 min'},
+  {id:'dt4',text:'Reply to any responses',meta:'Check your email inbox',time:'15 min'},
+  {id:'dt5',text:'Update prospect statuses',meta:'Keep pipeline current',time:'5 min'},
+];
+
+function renderToday(){
+  const overdue=S.prospects.filter(p=>!['booked','closed'].includes(p.status)&&p.lastContacted&&daysSince(p.lastContacted)>=3);
+  const alerts=[];
+  S.clients.forEach(c=>{
+    const m=monthsSince(c.start);
+    if(m===3||m===6){const k=`ann-${c.id}-${m}`;if(!S.checklist[k])alerts.push({type:'anniversary',client:c.name,months:m,key:k})}
+    const h=clientHealth(c);if(h.label==='At Risk')alerts.push({type:'atrisk',client:c.name,score:h.score});
+  });
+  (S.warmups||[]).forEach(w=>{if(daysSince(w.start)>=14&&!w.notified)alerts.push({type:'warmup',domain:w.domain})});
+  document.getElementById('t-followups').textContent=overdue.length;
+  document.getElementById('t-alerts').textContent=alerts.length;
+  document.getElementById('today-alerts').innerHTML=alerts.map(a=>{
+    if(a.type==='anniversary')return`<div class="warn-box" style="background:var(--yellow-dim);border-color:rgba(255,200,61,.25)">🎉 <strong>${a.client}</strong> hit ${a.months} months! Ask for a referral. <button class="btn btn-yellow btn-xs" style="margin-left:8px" onclick="dismissAlert('${a.key}')">Dismiss</button></div>`;
+    if(a.type==='atrisk')return`<div class="warn-box">⚠️ <strong>${a.client}</strong> is at risk (health: ${a.score}/100). Send their monthly report now. <button class="btn btn-ghost btn-xs" style="margin-left:8px" onclick="nav('reports')">Send Report →</button></div>`;
+    if(a.type==='warmup')return`<div class="tip-box">✅ <strong>${a.domain}</strong> warmup complete — ready to send! <button class="btn btn-primary btn-xs" style="margin-left:8px" onclick="nav('warmup')">View →</button></div>`;
+    return'';
+  }).join('');
+  const overdueEl=document.getElementById('today-overdue');
+  if(!overdue.length){overdueEl.innerHTML=`<div class="empty"><div class="ei">✅</div><p>No overdue follow-ups!</p></div>`}
+  else overdueEl.innerHTML=`<div class="clist">${overdue.map(p=>{const days=daysSince(p.lastContacted);const col=days>=7?'var(--red)':days>=4?'var(--orange)':'var(--yellow)';return`<div class="ic"><div class="ic-top"><div><div class="ic-name">${p.name}</div><div class="ic-meta">${p.niche} · ${p.location||'No location'}</div></div><span style="color:${col};font-family:'Syne Mono',monospace;font-size:.73rem;font-weight:700">${days}d ago</span></div><div class="ic-actions"><button class="btn btn-primary btn-xs" onclick="nav('outreach');setTimeout(()=>{document.getElementById('out-prospect').value='${p.id}';fillOutreach();document.getElementById('out-type').value='${days>=7?'fu2':'fu1'}';},200)">✉️ Follow Up</button><button class="btn btn-ghost btn-xs" onclick="setPStatus('${p.id}','replied')">Got Reply</button><button class="btn btn-success btn-xs" onclick="setPStatus('${p.id}','booked')">Call Booked</button></div></div>`;}).join('')}</div>`;
+  const tk=new Date().toDateString();if(!S.checklist[tk])S.checklist[tk]={};const ch=S.checklist[tk];
+  document.getElementById('today-checklist').innerHTML=DAILY_TASKS.map(t=>`<div class="task-item ${ch[t.id]?'done':''}" id="ti-${t.id}"><div class="tcheck" onclick="toggleTask('${t.id}')">${ch[t.id]?'✓':''}</div><div class="task-content"><div class="task-title">${t.text}</div><div class="task-meta">${t.meta}</div></div><span style="font-family:'Syne Mono',monospace;font-size:.66rem;color:var(--text3)">${t.time}</span></div>`).join('');
+  updateBadges();
+}
+
+async function toggleTask(id){const k=new Date().toDateString();if(!S.checklist[k])S.checklist[k]={};S.checklist[k][id]=!S.checklist[k][id];renderToday();if(S.checklist[k][id])toast('✅ Task done!');await dbSettings()}
+async function resetChecklist(){const k=new Date().toDateString();S.checklist[k]={};renderToday();toast('🔄 Reset');await dbSettings()}
+async function dismissAlert(key){S.checklist[key]=true;renderToday();await dbSettings()}
+
+// ═══════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════
+function renderDashboard(){
+  const total=S.prospects.length,contacted=S.prospects.filter(p=>['contacted','replied','booked','closed'].includes(p.status)).length,booked=S.prospects.filter(p=>p.status==='booked').length,active=S.clients.filter(c=>c.status==='active'),mrr=active.reduce((s,c)=>s+c.retainer,0);
+  document.getElementById('d-prospects').textContent=total;document.getElementById('d-contacted').textContent=contacted;document.getElementById('d-booked').textContent=booked;document.getElementById('d-clients').textContent=active.length;
+  const goal=(S.goals&&S.goals.mrr)||10000,pct=Math.min((mrr/goal)*100,100);
+  ['d-mrr','s-mrr'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='$'+mrr.toLocaleString()});
+  ['d-mrr-bar','s-mrr-bar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.width=pct+'%'});
+  ['d-mrr-goal','s-mrr-goal'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='$'+mrr.toLocaleString()+' of $'+goal.toLocaleString()});
+  document.getElementById('d-pipeline').innerHTML=[{k:'new',l:'New'},{k:'contacted',l:'Contacted'},{k:'replied',l:'Replied'},{k:'booked',l:'Booked'}].map(s=>{const items=S.prospects.filter(p=>p.status===s.k);return`<div class="pc"><div class="ph"><span class="ph-t">${s.l}</span><span class="ph-c">${items.length}</span></div><div class="pi">${items.slice(0,4).map(p=>`<div class="pcard"><div class="pcard-n">${p.name}</div><div class="pcard-m">${p.niche}${p.location?' · '+p.location:''}</div></div>`).join('')}</div></div>`;}).join('');
+  const dCL=document.getElementById('d-clients-list');
+  if(!active.length)dCL.innerHTML=`<div class="empty"><div class="ei">🤝</div><p>No active clients yet.</p></div>`;
+  else dCL.innerHTML=active.map(c=>{const h=clientHealth(c);return`<div class="ic"><div class="ic-top"><div><div class="ic-name">${c.name}</div><div class="ic-meta">${c.niche} · Started ${fmtDate(c.start)}</div></div><div style="text-align:right"><div style="font-family:'Syne',sans-serif;font-weight:800;color:var(--green)">$${c.retainer.toLocaleString()}/mo</div><div class="hs"><div class="hs-dot" style="background:${h.color}"></div><span style="font-size:.7rem;color:${h.color}">${h.label}</span></div></div></div></div>`;}).join('');
+}
+
+// ═══════════════════════════════════════════
+// PROSPECTS
+// ═══════════════════════════════════════════
+async function saveProspect(){
+  const name=document.getElementById('pf-name').value.trim();if(!name){toast('⚠️ Business name required');return}
+  const p={id:uid(),name,niche:document.getElementById('pf-niche').value,location:document.getElementById('pf-loc').value,contact:document.getElementById('pf-contact').value,email:document.getElementById('pf-email').value,phone:document.getElementById('pf-phone').value,website:document.getElementById('pf-web').value,source:document.getElementById('pf-source').value,notes:document.getElementById('pf-notes').value,status:'new',added:new Date().toISOString(),lastContacted:null};
+  p.score=parseInt(document.getElementById('pf-score').value)||leadScore(p);
+  S.prospects.push(p);closeM('modal-prospect');
+  ['pf-name','pf-loc','pf-contact','pf-email','pf-phone','pf-web','pf-notes','pf-score'].forEach(id=>document.getElementById(id).value='');
+  renderProspects();updateBadges();toast('🎯 Prospect added: '+name);
+  await dbProspect(p);logWeeklyActivity('prospects',1);
+}
+
+async function setPStatus(id,status){
+  const p=S.prospects.find(x=>x.id===id);if(!p)return;
+  p.status=status;if(['contacted','replied','booked'].includes(status))p.lastContacted=new Date().toISOString();
+  renderProspects();renderDashboard();updateBadges();renderToday();
+  await dbProspect(p);
+}
+
+async function deleteProspect(id){
+  if(!confirm('Delete this prospect?'))return;
+  S.prospects=S.prospects.filter(x=>x.id!==id);renderProspects();updateBadges();renderDashboard();toast('🗑️ Removed');
+  await dbDel('prospects',id);
+}
+
+function promoteToClient(id){
+  const p=S.prospects.find(x=>x.id===id);if(!p)return;
+  document.getElementById('cf-name').value=p.name;document.getElementById('cf-niche').value=p.niche;document.getElementById('cf-contact').value=p.contact;document.getElementById('cf-email').value=p.email;document.getElementById('cf-start').value=new Date().toISOString().split('T')[0];
+  openM('modal-client');
+}
+
+function renderProspects(){
+  const search=(document.getElementById('p-search')?.value||'').toLowerCase();const f=filters.p;
+  let list=S.prospects.filter(p=>{if(f&&p.status!==f)return false;if(search&&!p.name.toLowerCase().includes(search)&&!(p.contact||'').toLowerCase().includes(search))return false;return true;});
+  list.sort((a,b)=>(b.score||0)-(a.score||0));
+  const el=document.getElementById('prospects-list');
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">🎯</div><p>No prospects found.</p><button class="btn btn-primary" onclick="openM('modal-prospect')">+ Add Prospect</button></div>`;return}
+  el.innerHTML=list.map(p=>{
+    const days=p.lastContacted?daysSince(p.lastContacted):null;const fu=days!==null&&days>=3&&!['booked','closed'].includes(p.status);
+    const sc=p.score>=8?'var(--green)':p.score>=5?'var(--yellow)':'var(--text3)';
+    return`<div class="ic"><div class="ic-top"><div><div class="ic-name">${p.name} ${fu?'<span style="color:var(--red);font-size:.72rem">● Follow up</span>':''}</div><div class="ic-meta">${p.niche} · ${p.location||'No location'} · ${p.source||''}</div>${p.contact?`<div class="ic-meta" style="margin-top:2px">👤 ${p.contact}${p.email?' · '+p.email:''}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">${sbadge(p.status)}<span style="font-family:'Syne Mono',monospace;font-size:.68rem;color:${sc};font-weight:700">★ ${p.score||'?'}/10</span></div></div>${p.notes?`<div style="font-size:.75rem;color:var(--text3);margin-top:3px">${p.notes.slice(0,70)}${p.notes.length>70?'…':''}</div>`:''}
+    <div class="ic-actions"><select onchange="setPStatus('${p.id}',this.value)" style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:4px 7px;font-size:.72rem;color:var(--text2);cursor:pointer">${['new','contacted','replied','booked','closed'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}</select><button class="btn btn-ghost btn-xs" onclick="nav('outreach');setTimeout(()=>{document.getElementById('out-prospect').value='${p.id}';fillOutreach();},200)">✉️</button><button class="btn btn-success btn-xs" onclick="promoteToClient('${p.id}')">🤝</button><button class="btn btn-danger btn-xs" onclick="deleteProspect('${p.id}')">✕</button></div></div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// CLIENTS
+// ═══════════════════════════════════════════
+async function saveClient(){
+  const name=document.getElementById('cf-name').value.trim();const retainer=parseFloat(document.getElementById('cf-retainer').value);
+  if(!name||!retainer){toast('⚠️ Name and retainer required');return}
+  const c={id:uid(),name,retainer,niche:document.getElementById('cf-niche').value,contact:document.getElementById('cf-contact').value,email:document.getElementById('cf-email').value,start:document.getElementById('cf-start').value,notes:document.getElementById('cf-notes').value,status:'active',added:new Date().toISOString()};
+  S.clients.push(c);closeM('modal-client');['cf-name','cf-retainer','cf-contact','cf-email','cf-start','cf-notes'].forEach(id=>document.getElementById(id).value='');
+  renderClients();updateBadges();renderDashboard();toast('🤝 Client added: '+name);await dbClient(c);
+}
+
+async function toggleClientStatus(id){const c=S.clients.find(x=>x.id===id);if(!c)return;c.status=c.status==='active'?'paused':'active';renderClients();renderDashboard();await dbClient(c)}
+async function deleteClient(id){if(!confirm('Remove this client?'))return;S.clients=S.clients.filter(x=>x.id!==id);renderClients();updateBadges();renderDashboard();toast('🗑️ Removed');await dbDel('clients',id)}
+
+function renderClients(){
+  const f=filters.c;let list=f==='atrisk'?S.clients.filter(c=>clientHealth(c).label==='At Risk'):S.clients.filter(c=>!f||c.status===f);
+  const el=document.getElementById('clients-list');
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">🤝</div><p>No clients yet.</p><button class="btn btn-primary" onclick="openM('modal-client')">+ Add Client</button></div>`;return}
+  el.innerHTML=list.map(c=>{const h=clientHealth(c);const months=monthsSince(c.start);return`<div class="ic" style="${h.label==='At Risk'?'border-left:3px solid var(--red)':''}"><div class="ic-top"><div><div class="ic-name">${c.name}</div><div class="ic-meta">${c.niche}${c.contact?' · '+c.contact:''}${months>0?' · '+months+'mo':''}</div></div><div style="text-align:right"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--green)">$${c.retainer.toLocaleString()}<span style="font-size:.62rem;color:var(--text2);font-weight:400">/mo</span></div><div class="hs" style="justify-content:flex-end;margin-top:3px"><div class="hs-dot" style="background:${h.color}"></div><span style="font-size:.68rem;color:${h.color};font-weight:600">${h.label} (${h.score})</span></div></div></div><div style="font-size:.73rem;color:var(--text2);margin-top:5px;display:flex;gap:14px;flex-wrap:wrap"><span>📅 ${fmtDate(c.start)}</span><span>🧾 Next: ${nextInvoice(c.start)}</span>${sbadge(c.status)}</div><div class="ic-actions"><button class="btn btn-ghost btn-xs" onclick="nav('reports');setTimeout(()=>{document.getElementById('rep-client').value='${c.id}'},100)">📄 Report</button><button class="btn btn-ghost btn-xs" onclick="nav('campaigns');setTimeout(()=>{document.getElementById('camp-client').value='${c.id}'},100)">🚀 Campaign</button><button class="btn btn-ghost btn-xs" onclick="toggleClientStatus('${c.id}')">${c.status==='active'?'⏸':'▶'}</button><button class="btn btn-danger btn-xs" onclick="deleteClient('${c.id}')">✕</button></div></div>`;}).join('');
+}
+
+// ═══════════════════════════════════════════
+// WARMUP
+// ═══════════════════════════════════════════
+function populateWarmupClientSel(){const sel=document.getElementById('wu-client');if(!sel)return;sel.innerHTML='<option value="">— Link to client —</option>'+S.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+
+async function saveWarmup(){
+  const domain=document.getElementById('wu-domain').value.trim();const start=document.getElementById('wu-start').value;
+  if(!domain||!start){toast('⚠️ Domain and start date required');return}
+  const clientId=document.getElementById('wu-client').value;const client=S.clients.find(c=>c.id===clientId);
+  const w={id:uid(),domain,clientId,clientName:client?.name||'',start,target:parseInt(document.getElementById('wu-target').value)||40,tool:document.getElementById('wu-tool').value,notified:false};
+  S.warmups.push(w);closeM('modal-warmup');document.getElementById('wu-domain').value='';renderWarmup();toast('🔥 Warmup started: '+domain);await dbWarmup(w);
+}
+
+async function deleteWarmup(id){S.warmups=(S.warmups||[]).filter(x=>x.id!==id);renderWarmup();await dbDel('warmups',id)}
+
+function renderWarmup(){
+  if(!S.warmups)S.warmups=[];const el=document.getElementById('warmup-list');
+  if(!S.warmups.length){el.innerHTML=`<div class="empty"><div class="ei">🔥</div><p>No domains warming up.</p><button class="btn btn-primary" onclick="populateWarmupClientSel();openM('modal-warmup')">+ Add Domain</button></div>`;return}
+  el.innerHTML=S.warmups.map(w=>{const days=Math.min(14,daysSince(w.start));const pct=Math.round((days/14)*100);const done=days>=14;return`<div class="ic" style="${done?'border-left:3px solid var(--green)':''}"><div class="ic-top"><div><div class="ic-name">${w.domain}</div><div class="ic-meta">${w.clientName||'No client linked'} · ${w.tool} · Target: ${w.target}/day</div></div>${done?'<span class="badge b-gr">✅ Ready</span>':`<span style="font-family:'Syne Mono',monospace;font-size:.78rem;color:var(--accent)">${pct}%</span>`}</div><div class="wu-track">${Array.from({length:14},(_,i)=>`<div class="wu-day ${i<days?'done':i===days?'today':''}" data-tip="Day ${i+1}"></div>`).join('')}</div><div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text3);margin-bottom:4px"><span>Day 1</span><span>Day ${days}/14</span><span>Day 14</span></div><div class="ic-actions">${done?`<button class="btn btn-success btn-xs" onclick="nav('campaigns')">🚀 Start Sending</button>`:`<span style="font-size:.76rem;color:var(--text2)">${14-days} days remaining</span>`}<button class="btn btn-danger btn-xs" onclick="deleteWarmup('${w.id}')">✕</button></div></div>`;}).join('');
+}
+
+// ═══════════════════════════════════════════
+// OUTREACH
+// ═══════════════════════════════════════════
+function populateOutSel(){const sel=document.getElementById('out-prospect');if(!sel)return;sel.innerHTML='<option value="">— or fill manually —</option>'+S.prospects.filter(p=>p.status!=='closed').map(p=>`<option value="${p.id}">${p.name} (${p.niche}) ★${p.score||'?'}</option>`).join('')}
+
+function fillOutreach(){const id=document.getElementById('out-prospect').value;if(!id)return;const p=S.prospects.find(x=>x.id===id);if(!p)return;document.getElementById('out-biz').value=p.name;document.getElementById('out-contact').value=p.contact?p.contact.split(' ')[0]:'';const nEl=document.getElementById('out-niche');for(let o of nEl.options)if(o.value===p.niche){nEl.value=p.niche;break}S.lastOutProspectId=id}
+
+let _lastOutText='';
+
+async function genOutreach(){
+  const biz=document.getElementById('out-biz').value.trim();if(!biz){toast('⚠️ Enter a business name');return}
+  const contact=document.getElementById('out-contact').value.trim()||'there';const niche=document.getElementById('out-niche').value;const type=document.getElementById('out-type').value;
+  const types={cold:'initial cold outreach email',fu1:'3-day follow-up email',fu2:'7-day follow-up email',break:'final breakup email'};
+  document.getElementById('out-result').style.display='block';aiLoad('out-output');
+  try{
+    const text=await ai(`Write a ${types[type]} from an AI email lead gen consultant to ${contact} at ${biz} (${niche}). Service: AI-powered email campaigns generating qualified leads. Monthly retainer. Rules: Under 140 words cold, under 90 follow-ups. Sound human. One CTA: book 15-min call. Subject line labeled "Subject:". Format:\nSubject: [line]\n\n[email body]`);
+    aiDone('out-output',text);_lastOutText=text;
+    const entry={id:uid(),biz,niche,contact,type:types[type],date:new Date().toISOString(),status:'generated',prospectId:S.lastOutProspectId};
+    S.outreachLog.unshift(entry);renderOutLog();logWeeklyActivity('emails',1);
+    await dbOutreach(entry);await dbSettings();
+  }catch(e){aiDone('out-output','Error: '+e.message)}
+}
+
+function copyOut(){navigator.clipboard.writeText(_lastOutText).then(()=>toast('📋 Copied'))}
+
+async function markContacted(){
+  const id=S.lastOutProspectId;if(!id){toast('⚠️ No prospect selected');return}
+  await setPStatus(id,'contacted');
+  const e=S.outreachLog.find(x=>x.prospectId===id&&x.status==='generated');if(e){e.status='contacted';renderOutLog();await dbOutreach(e)}
+  toast('✅ Marked contacted');
+}
+
+async function logReply(cat){
+  const id=S.lastOutProspectId;if(!id){toast('⚠️ No prospect selected');return}
+  const rc={id:uid(),prospectId:id,cat,niche:document.getElementById('out-niche').value,date:new Date().toISOString()};
+  S.replyCats.push(rc);
+  const statusMap={interested:'replied',not_now:'contacted',referral:'replied'};
+  if(statusMap[cat])await setPStatus(id,statusMap[cat]);
+  if(cat==='unsubscribe')await setPStatus(id,'closed');
+  toast(`📊 Reply logged: ${cat.replace('_',' ')}`);await dbReplyCat(rc);
+}
+
+async function updateLogStatus(id,status){
+  const e=S.outreachLog.find(x=>x.id===id);if(!e)return;
+  e.status=status;if(e.prospectId)await setPStatus(e.prospectId,status);renderOutLog();toast('✅ Updated');
+  if(status==='booked')logWeeklyActivity('calls',1);await dbOutreach(e);await dbSettings();
+}
+
+function renderOutLog(){
+  const el=document.getElementById('out-log');
+  if(!S.outreachLog.length){el.innerHTML=`<div class="empty"><div class="ei">📬</div><p>No emails generated yet.</p></div>`;return}
+  el.innerHTML=S.outreachLog.slice(0,20).map(l=>`<div class="ic"><div class="ic-top"><div><div class="ic-name">${l.biz}</div><div class="ic-meta">${l.niche} · ${l.type} · ${fmtDate(l.date)}</div></div>${sbadge(l.status)}</div><div class="ic-actions">${l.status==='generated'?`<button class="btn btn-ghost btn-xs" onclick="updateLogStatus('${l.id}','contacted')">Mark Sent</button>`:''}${l.status==='contacted'?`<button class="btn btn-ghost btn-xs" onclick="updateLogStatus('${l.id}','replied')">Got Reply</button>`:''}${l.status==='replied'?`<button class="btn btn-success btn-xs" onclick="updateLogStatus('${l.id}','booked')">Call Booked 🎉</button>`:''}</div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// CAMPAIGNS
+// ═══════════════════════════════════════════
+function populateCampSel(){const sel=document.getElementById('camp-client');if(!sel)return;sel.innerHTML='<option value="">— Select client —</option>'+S.clients.map(c=>`<option value="${c.id}">${c.name} (${c.niche})</option>`).join('')}
+let _lastCampText='';
+
+async function genCampaign(){
+  const cId=document.getElementById('camp-client').value;const audience=document.getElementById('camp-audience').value.trim();
+  if(!cId){toast('⚠️ Select a client');return}if(!audience){toast('⚠️ Describe the target audience');return}
+  const client=S.clients.find(x=>x.id===cId);const out=document.getElementById('camp-output');
+  out.innerHTML='<div class="ai-box ai-loading"><div class="ai-ph"><div class="sp">⏳</div><p>Building sequence...</p></div></div>';
+  try{
+    const text=await ai(`Write a ${document.getElementById('camp-len').value}-email lead gen sequence for:\nBusiness: ${client.name} (${client.niche})\nTarget: ${audience}\nGoal: ${document.getElementById('camp-goal').value}\nTone: ${document.getElementById('camp-tone').value}\n\nFor each: EMAIL [N] — Day [X]\nSubject: [subject]\nPreview: [preview]\n---\n[Body 120-160 words, natural, one CTA]\n---\nMake each distinct. Final email strongest urgency.`,1000);
+    _lastCampText=text;
+    const parts=text.split(/(?=EMAIL \d+)/g).filter(Boolean);
+    out.innerHTML=parts.map((part,i)=>{const title=(part.match(/EMAIL \d+ — ([^\n]+)/)||[])[1]||`Email ${i+1}`;return`<div class="estep ${i===0?'open':''}"><div class="estep-hdr" onclick="this.parentElement.classList.toggle('open')"><span class="estep-num">EMAIL ${i+1}</span><span class="estep-title">${title}</span><span style="color:var(--text3)">▾</span></div><div class="estep-body"><div class="ai-box" style="font-size:.8rem">${part.trim().replace(/</g,'&lt;')}</div><button class="btn btn-ghost btn-sm" style="margin-top:7px" onclick="navigator.clipboard.writeText(${JSON.stringify(part)}).then(()=>toast('📋 Copied'))">📋 Copy</button></div></div>`;}).join('');
+    document.getElementById('camp-copy').style.display='block';
+  }catch(e){out.innerHTML=`<div class="ai-box">Error: ${e.message}</div>`}
+}
+function copyCamp(){navigator.clipboard.writeText(_lastCampText).then(()=>toast('📋 All emails copied'))}
+
+// ═══════════════════════════════════════════
+// MONTHLY REPORTS
+// ═══════════════════════════════════════════
+function populateRepSel(){const sel=document.getElementById('rep-client');if(!sel)return;sel.innerHTML='<option value="">— Select client —</option>'+S.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');const mEl=document.getElementById('rep-month');if(mEl&&!mEl.value)mEl.value=new Date().toISOString().slice(0,7)}
+let _lastRepText='';
+
+async function genReport(){
+  const cId=document.getElementById('rep-client').value;if(!cId){toast('⚠️ Select a client');return}
+  const client=S.clients.find(x=>x.id===cId);const month=document.getElementById('rep-month').value||new Date().toISOString().slice(0,7);
+  document.getElementById('rep-output').style.display='block';aiLoad('rep-result');
+  try{
+    const text=await ai(`Write a professional monthly results report email for ${client.name} (${client.niche}), owner: ${client.contact||'[Client Name]'}, month: ${month}.\nStats: Emails sent: ${document.getElementById('rep-sent').value||'—'} · Open rate: ${document.getElementById('rep-opens').value||'—'}% · Reply rate: ${document.getElementById('rep-replies').value||'—'}% · Hot leads forwarded: ${document.getElementById('rep-leads').value||'—'}${document.getElementById('rep-wins').value?'\nWins: '+document.getElementById('rep-wins').value:''}\nWrite concise professional email under 200 words: subject line, brief wins, key metrics, next month plan, clear next step. Subject: [line]\n\n[email body]`);
+    aiDone('rep-result',text);_lastRepText=text;
+    const r={id:uid(),clientId:cId,month,date:new Date().toISOString()};
+    if(!S.reports)S.reports=[];S.reports.push(r);await dbReport(r);
+  }catch(e){aiDone('rep-result','Error: '+e.message)}
+}
+function copyRep(){navigator.clipboard.writeText(_lastRepText).then(()=>toast('📋 Report copied'))}
+
+// ═══════════════════════════════════════════
+// AI REPLY ANALYZER
+// ═══════════════════════════════════════════
+let _lastARText='';
+
+async function analyzeReply(){
+  const reply=document.getElementById('ar-reply').value.trim();if(!reply){toast('⚠️ Paste their reply first');return}
+  document.getElementById('ar-output').style.display='block';aiLoad('ar-result');document.getElementById('ar-intent-card').innerHTML='';
+  try{
+    const text=await ai(`Analyze this reply from a ${document.getElementById('ar-niche').value} business owner to AI email lead gen outreach (stage: ${document.getElementById('ar-stage').value}):\n\n"${reply}"\n\nRespond EXACTLY:\nINTENT: [Very Interested / Mildly Interested / Objecting / Not Interested / Wrong Person / Unsubscribe / Referral Offered]\nHEAT: [Hot / Warm / Cold]\nSUMMARY: [One sentence]\n\nRESPONSE:\n[Exact reply to send back. Under 100 words. Move toward 15-min call. No subject line.]`);
+    const intent=(text.match(/INTENT:\s*(.+)/)||[])[1]?.trim()||'Unknown';
+    const heat=(text.match(/HEAT:\s*(.+)/)||[])[1]?.trim()||'Unknown';
+    const summary=(text.match(/SUMMARY:\s*(.+)/)||[])[1]?.trim()||'';
+    const response=(text.match(/RESPONSE:\s*([\s\S]+)/)||[])[1]?.trim()||'';
+    const hc=heat==='Hot'?'var(--green)':heat==='Warm'?'var(--yellow)':'var(--text2)';
+    const hi=heat==='Hot'?'🔥':heat==='Warm'?'⚡':'❄️';
+    document.getElementById('ar-intent-card').innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;margin-bottom:10px"><div style="display:flex;gap:14px;align-items:flex-start"><div style="font-size:1.8rem">${hi}</div><div><div style="font-weight:700;color:${hc};font-size:.95rem">${heat} Lead · ${intent}</div><div style="font-size:.8rem;color:var(--text2);margin-top:3px">${summary}</div></div></div></div>`;
+    _lastARText=response;aiDone('ar-result',response);document.getElementById('ar-copy-btn').style.display='inline-flex';
+  }catch(e){aiDone('ar-result','Error: '+e.message)}
+}
+function copyAR(){navigator.clipboard.writeText(_lastARText).then(()=>toast('📋 Copied'))}
+
+// ═══════════════════════════════════════════
+// SUBJECT LINE GENERATOR
+// ═══════════════════════════════════════════
+async function genSubjects(){
+  const niche=document.getElementById('sl-niche').value;const out=document.getElementById('sl-output');
+  out.innerHTML='<div class="ai-box ai-loading"><div class="ai-ph"><div class="sp">⏳</div><p>Generating 5 variants...</p></div></div>';
+  try{
+    const text=await ai(`Generate 5 subject line variants for a ${document.getElementById('sl-type').value} email to a ${niche} business owner about AI email lead generation.${document.getElementById('sl-angle').value?' Angle: '+document.getElementById('sl-angle').value:''}\n\nFor each:\n1. [subject line]\nScore: X/10 — [brief reason]\n\nRules: Under 50 chars. No spam words. Curiosity or pain point. Vary approaches.`);
+    const lines=text.split('\n').filter(l=>l.trim());const subjects=[];let cur=null;
+    lines.forEach(l=>{const nm=l.match(/^(\d+)\.\s+(.+)/);if(nm){if(cur)subjects.push(cur);cur={line:nm[2],score:0,reason:''}}else if(cur&&l.toLowerCase().startsWith('score:')){const sm=l.match(/Score:\s*(\d+)\/10\s*[—-]\s*(.+)/i);if(sm){cur.score=parseInt(sm[1]);cur.reason=sm[2]}}});if(cur)subjects.push(cur);
+    if(subjects.length)out.innerHTML=subjects.map(s=>{const sc=s.score>=8?'var(--green)':s.score>=6?'var(--yellow)':'var(--text2)';return`<div class="ic" style="margin-bottom:7px"><div class="ic-top"><div><div class="ic-name" style="font-size:.88rem">${s.line}</div><div class="ic-meta" style="margin-top:3px">${s.reason}</div></div><div style="font-family:'Syne Mono',monospace;font-size:.8rem;font-weight:700;color:${sc}">${s.score}/10</div></div><div class="ic-actions"><button class="btn btn-ghost btn-xs" onclick="navigator.clipboard.writeText(${JSON.stringify(s.line)}).then(()=>toast('📋 Copied'))">📋 Copy</button><button class="btn btn-success btn-xs" onclick="saveSLTemplate(${JSON.stringify(s.line)},${s.score},'${niche}')">💾 Save</button></div></div>`;}).join('');
+    else out.innerHTML=`<div class="ai-box" style="white-space:pre-wrap">${text}</div>`;
+  }catch(e){out.innerHTML=`<div class="ai-box">Error: ${e.message}</div>`}
+}
+
+async function saveSLTemplate(line,score,niche){
+  const t={id:uid(),name:line,content:line,type:'subject',niche,openRate:'',replyRate:'',notes:`AI score: ${score}/10`,saved:new Date().toISOString()};
+  if(!S.templates)S.templates=[];S.templates.push(t);toast('💾 Saved to Templates!');await dbTemplate(t);
+}
+
+// ═══════════════════════════════════════════
+// A/B TESTS
+// ═══════════════════════════════════════════
+async function saveAB(){
+  const name=document.getElementById('ab-name').value.trim();const a=document.getElementById('ab-a').value.trim();const b=document.getElementById('ab-b').value.trim();
+  if(!name||!a||!b){toast('⚠️ Fill in all fields');return}
+  if(!S.abtests)S.abtests=[];
+  const t={id:uid(),name,niche:document.getElementById('ab-niche').value,metric:document.getElementById('ab-metric').value,a,b,aSent:0,aReplies:0,bSent:0,bReplies:0,status:'running',created:new Date().toISOString()};
+  S.abtests.push(t);closeM('modal-ab');['ab-name','ab-a','ab-b'].forEach(id=>document.getElementById(id).value='');
+  renderAB();toast('🧪 A/B test started!');await dbABTest(t);
+}
+
+async function updateABStat(id,variant,field,val){const t=(S.abtests||[]).find(x=>x.id===id);if(!t)return;t[variant+field]=parseInt(val)||0;renderAB();await dbABTest(t)}
+async function concludeAB(id,winner){const t=(S.abtests||[]).find(x=>x.id===id);if(!t)return;t.status='done';t.winner=winner;renderAB();toast(`🏆 Variant ${winner.toUpperCase()} wins!`);await dbABTest(t)}
+async function deleteAB(id){S.abtests=(S.abtests||[]).filter(x=>x.id!==id);renderAB();await dbDel('abtests',id)}
+async function saveABWinner(testId){const t=(S.abtests||[]).find(x=>x.id===testId);if(!t||!t.winner)return;const tmpl={id:uid(),name:t.name+' (A/B Winner)',content:t.winner==='a'?t.a:t.b,type:'subject',niche:t.niche,notes:'Won A/B test',saved:new Date().toISOString()};if(!S.templates)S.templates=[];S.templates.push(tmpl);toast('💾 Winner saved!');await dbTemplate(tmpl)}
+
+function renderAB(){
+  if(!S.abtests)S.abtests=[];const el=document.getElementById('ab-list');
+  if(!S.abtests.length){el.innerHTML=`<div class="empty"><div class="ei">🧪</div><p>No tests yet.</p><button class="btn btn-primary" onclick="openM('modal-ab')">+ New Test</button></div>`;return}
+  el.innerHTML=S.abtests.map(t=>{const aR=t.aSent>0?((t.aReplies/t.aSent)*100).toFixed(1):'—';const bR=t.bSent>0?((t.bReplies/t.bSent)*100).toFixed(1):'—';const leading=t.aSent>0&&t.bSent>0?(t.aReplies/t.aSent>=t.bReplies/t.bSent?'A':'B'):null;return`<div class="ic"><div class="ic-top"><div><div class="ic-name">${t.name}</div><div class="ic-meta">${t.niche} · ${t.metric} · ${t.status==='done'?'✅ Complete':'🔄 Running'}</div></div>${t.winner?`<span class="badge b-gr">Winner: ${t.winner.toUpperCase()}</span>`:leading?`<span class="badge b-ye">Leading: ${leading}</span>`:''}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px"><div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px"><div style="font-family:'Syne Mono',monospace;font-size:.58rem;color:var(--accent);margin-bottom:5px">VARIANT A</div><div style="font-size:.76rem;color:var(--text2);margin-bottom:7px">${t.a.slice(0,70)}${t.a.length>70?'…':''}</div><div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:.62rem;color:var(--text3)">Sent</div><input type="number" value="${t.aSent}" min="0" onchange="updateABStat('${t.id}','a','Sent',this.value)" style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:.76rem"></div><div style="flex:1"><div style="font-size:.62rem;color:var(--text3)">Replies</div><input type="number" value="${t.aReplies}" min="0" onchange="updateABStat('${t.id}','a','Replies',this.value)" style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:.76rem"></div></div><div style="font-size:.72rem;color:var(--green);margin-top:5px;font-weight:600">${aR}% reply rate</div></div><div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px"><div style="font-family:'Syne Mono',monospace;font-size:.58rem;color:var(--purple);margin-bottom:5px">VARIANT B</div><div style="font-size:.76rem;color:var(--text2);margin-bottom:7px">${t.b.slice(0,70)}${t.b.length>70?'…':''}</div><div style="display:flex;gap:6px"><div style="flex:1"><div style="font-size:.62rem;color:var(--text3)">Sent</div><input type="number" value="${t.bSent}" min="0" onchange="updateABStat('${t.id}','b','Sent',this.value)" style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:.76rem"></div><div style="flex:1"><div style="font-size:.62rem;color:var(--text3)">Replies</div><input type="number" value="${t.bReplies}" min="0" onchange="updateABStat('${t.id}','b','Replies',this.value)" style="width:100%;background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--text);font-size:.76rem"></div></div><div style="font-size:.72rem;color:var(--purple);margin-top:5px;font-weight:600">${bR}% reply rate</div></div></div><div class="ic-actions" style="margin-top:8px">${t.status==='running'?`<button class="btn btn-success btn-xs" onclick="concludeAB('${t.id}','a')">🏆 A Wins</button><button class="btn btn-ghost btn-xs" style="color:var(--purple)" onclick="concludeAB('${t.id}','b')">🏆 B Wins</button>`:`<button class="btn btn-ghost btn-xs" onclick="saveABWinner('${t.id}')">💾 Save Winner</button>`}<button class="btn btn-danger btn-xs" onclick="deleteAB('${t.id}')">✕</button></div></div>`;}).join('');
+}
+
+// ═══════════════════════════════════════════
+// NICHE PERFORMANCE
+// ═══════════════════════════════════════════
+function renderNiches(){
+  const stats={};S.prospects.forEach(p=>{if(!stats[p.niche])stats[p.niche]={niche:p.niche,total:0,contacted:0,replied:0,booked:0,closed:0};stats[p.niche].total++;if(['contacted','replied','booked','closed'].includes(p.status))stats[p.niche].contacted++;if(['replied','booked','closed'].includes(p.status))stats[p.niche].replied++;if(['booked','closed'].includes(p.status))stats[p.niche].booked++;if(p.status==='closed')stats[p.niche].closed++});
+  const el=document.getElementById('niche-stats');
+  if(!Object.keys(stats).length){el.innerHTML=`<div class="empty"><div class="ei">📈</div><p>No data yet. Add prospects to see niche performance.</p></div>`;return}
+  el.innerHTML=`<div class="sec-hd" style="margin-top:0"><div class="sec-t">Performance by Niche</div></div>`+Object.values(stats).sort((a,b)=>b.total-a.total).map(s=>{const rr=s.contacted>0?((s.replied/s.contacted)*100).toFixed(0):0;const cr=s.replied>0?((s.closed/s.replied)*100).toFixed(0):0;const rc=rr>=15?'var(--green)':rr>=8?'var(--yellow)':'var(--red)';return`<div class="ic" style="margin-bottom:8px"><div class="ic-top"><div><div class="ic-name">${s.niche}</div><div class="ic-meta">${s.total} prospects · ${s.replied} replied · ${s.closed} closed</div></div><div style="text-align:right"><div style="font-size:.78rem;font-weight:700;color:${rc}">${rr}%<span style="font-size:.65rem;color:var(--text2)"> reply</span></div><div style="font-size:.72rem;color:var(--green);font-weight:600">${cr}%<span style="font-size:.63rem;color:var(--text2)"> close</span></div></div></div><div style="margin-top:7px"><div class="pt" style="height:6px"><div class="pf" style="width:${rr}%;background:${rc}"></div></div></div></div>`;}).join('');
+  const cats={};(S.replyCats||[]).forEach(r=>{if(!cats[r.cat])cats[r.cat]=0;cats[r.cat]++});
+  const rbEl=document.getElementById('reply-breakdown');
+  if(!Object.keys(cats).length){rbEl.innerHTML=`<div style="font-size:.8rem;color:var(--text3);padding:10px">No reply data yet. Log replies in the Outreach tab.</div>`;return}
+  const total=Object.values(cats).reduce((a,b)=>a+b,0);const colors={interested:'var(--green)',not_now:'var(--yellow)',wrong_person:'var(--text2)',more_info:'var(--accent)',unsubscribe:'var(--red)',referral:'var(--purple)'};
+  rbEl.innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([cat,count])=>{const pct=Math.round((count/total)*100);return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="width:90px;font-size:.76rem;color:${colors[cat]||'var(--text2)'};font-weight:600;flex-shrink:0">${cat.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</div><div style="flex:1"><div class="pt" style="height:6px"><div class="pf" style="width:${pct}%;background:${colors[cat]||'var(--accent)'}"></div></div></div><div style="font-family:'Syne Mono',monospace;font-size:.7rem;color:var(--text2);width:40px;text-align:right">${count} (${pct}%)</div></div>`;}).join('');
+}
+
+// ═══════════════════════════════════════════
+// SCRIPTS
+// ═══════════════════════════════════════════
+const scriptTabs={};
+function switchTab(group,tab,el){scriptTabs[group]=tab;const prefix=group==='scr'?'scr-':'tmpl-';const tabs=group==='scr'?['obj','close','onboard']:['subject','body','sequence'];el.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');tabs.forEach(t=>{const el2=document.getElementById(prefix+t);if(el2)el2.style.display=t===tab?'block':'none'});if(group==='tmpl')renderTemplates(tab)}
+
+async function genScript(type){
+  let prompt='',outId='';
+  if(type==='obj'){outId='obj-out';prompt=`A ${document.getElementById('obj-niche').value} business owner said: "${document.getElementById('obj-sel').value}" about AI email lead generation. Write confident 2-3 sentence response acknowledging concern, reframe, move toward 15-min call. Then "Alt 1:" and "Alt 2:". No robotic scripts.`}
+  else if(type==='close'){outId='close-out';prompt=`Closing script for ${document.getElementById('close-biz').value||'the business'}. AI email lead gen. Price: ${document.getElementById('close-price').value||'$2,500/mo'}. Include: 1.Value summary 2.Present investment 3.Handle "need to think" 4.Direct close 5.Next steps. Natural, under 250 words.`}
+  else{outId='onboard-out';prompt=`Onboarding email for ${document.getElementById('onboard-name').value||'there'} at ${document.getElementById('onboard-biz').value||'the business'} who signed up for AI email lead gen. Include: warm welcome, confirm service, 2-week warmup expectation, ask for 4 info pieces, contact info. Subject line included. Under 200 words.`}
+  aiLoad(outId);
+  try{const text=await ai(prompt);aiDone(outId,text);document.getElementById(outId).insertAdjacentHTML('afterend',`<button class="btn btn-ghost btn-sm" style="margin-top:7px" onclick="navigator.clipboard.writeText(${JSON.stringify(text)}).then(()=>toast('📋 Copied'))">📋 Copy</button>`)}
+  catch(e){aiDone(outId,'Error: '+e.message)}
+}
+
+// ═══════════════════════════════════════════
+// TEMPLATES
+// ═══════════════════════════════════════════
+async function saveTemplate(){
+  const name=document.getElementById('tf-name').value.trim();const content=document.getElementById('tf-content').value.trim();
+  if(!name||!content){toast('⚠️ Name and content required');return}
+  const t={id:uid(),name,content,type:document.getElementById('tf-type').value,niche:document.getElementById('tf-niche').value,openRate:document.getElementById('tf-open').value,replyRate:document.getElementById('tf-reply').value,saved:new Date().toISOString()};
+  if(!S.templates)S.templates=[];S.templates.push(t);closeM('modal-template');['tf-name','tf-content','tf-open','tf-reply'].forEach(id=>document.getElementById(id).value='');
+  renderTemplates(scriptTabs['tmpl']||'subject');toast('💾 Template saved!');await dbTemplate(t);
+}
+
+async function deleteTemplate(id){S.templates=(S.templates||[]).filter(x=>x.id!==id);renderTemplates(scriptTabs['tmpl']||'subject');await dbDel('templates',id)}
+
+function renderTemplates(type='subject'){
+  if(!S.templates)S.templates=[];const list=S.templates.filter(t=>t.type===type);const el=document.getElementById('tmpl-'+type);if(!el)return;
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="ei">💾</div><p>No ${type} templates saved yet.</p><button class="btn btn-primary" onclick="openM('modal-template')">+ Save Template</button></div>`;return}
+  el.innerHTML=list.map(t=>`<div class="ic"><div class="ic-top"><div><div class="ic-name">${t.name}</div><div class="ic-meta">${t.niche}${t.openRate?' · 📬 '+t.openRate+'% open':''}${t.replyRate?' · 💬 '+t.replyRate+'% reply':''}</div></div><button class="btn btn-danger btn-xs" onclick="deleteTemplate('${t.id}')">✕</button></div><div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px;margin-top:7px;font-size:.78rem;color:var(--text2);white-space:pre-wrap;max-height:100px;overflow:auto">${t.content}</div><div class="ic-actions" style="margin-top:7px"><button class="btn btn-ghost btn-xs" onclick="navigator.clipboard.writeText(${JSON.stringify(t.content)}).then(()=>toast('📋 Copied'))">📋 Copy</button><span style="font-size:.68rem;color:var(--text3)">Saved ${fmtDate(t.saved)}</span></div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// INVOICES
+// ═══════════════════════════════════════════
+function populateInvSel(){const sel=document.getElementById('inv-client');if(!sel)return;sel.innerHTML='<option value="">— Select client —</option>'+S.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+
+async function saveInvoice(){
+  const cId=document.getElementById('inv-client').value;const amount=parseFloat(document.getElementById('inv-amount').value);const due=document.getElementById('inv-due').value;
+  if(!cId||!amount||!due){toast('⚠️ Client, amount, and due date required');return}
+  const client=S.clients.find(c=>c.id===cId);if(!S.invoices)S.invoices=[];
+  const inv={id:uid(),clientId:cId,clientName:client?.name||'Unknown',amount,due,status:document.getElementById('inv-status').value,notes:document.getElementById('inv-notes').value,created:new Date().toISOString()};
+  S.invoices.push(inv);closeM('modal-invoice');['inv-amount','inv-due','inv-notes'].forEach(id=>document.getElementById(id).value='');
+  renderInvoices();updateInvBadge();toast('🧾 Invoice logged!');await dbInvoice(inv);
+}
+
+async function markInvPaid(id){const inv=(S.invoices||[]).find(x=>x.id===id);if(!inv)return;inv.status='paid';inv.paidDate=new Date().toISOString();renderInvoices();updateInvBadge();toast('✅ Marked paid!');await dbInvoice(inv)}
+async function deleteInvoice(id){S.invoices=(S.invoices||[]).filter(x=>x.id!==id);renderInvoices();updateInvBadge();await dbDel('invoices',id)}
+
+function updateInvBadge(){const n=(S.invoices||[]).filter(i=>i.status==='overdue').length;const b=document.getElementById('nb-invoices');if(b){b.style.display=n>0?'inline-block':'none';b.textContent=n}}
+
+function renderInvoices(){
+  if(!S.invoices)S.invoices=[];const now=new Date();S.invoices.forEach(inv=>{if(inv.status==='pending'&&new Date(inv.due)<now)inv.status='overdue'});
+  const paid=S.invoices.filter(i=>i.status==='paid');const thisMonth=paid.filter(i=>{const d=new Date(i.paidDate||i.created);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()});
+  document.getElementById('inv-paid').textContent=thisMonth.length;document.getElementById('inv-overdue').textContent=S.invoices.filter(i=>i.status==='overdue').length;
+  const el=document.getElementById('inv-list');const sorted=[...S.invoices].sort((a,b)=>({overdue:0,pending:1,paid:2}[a.status]??3)-({overdue:0,pending:1,paid:2}[b.status]??3));
+  if(!sorted.length){el.innerHTML=`<div class="empty"><div class="ei">🧾</div><p>No invoices logged.</p><button class="btn btn-primary" onclick="populateInvSel();openM('modal-invoice')">+ Log Invoice</button></div>`;return}
+  const smap={paid:'b-gr',pending:'b-ye',overdue:'b-rd'};
+  el.innerHTML=sorted.map(inv=>`<div class="ic" style="${inv.status==='overdue'?'border-left:3px solid var(--red)':''}"><div class="ic-top"><div><div class="ic-name">${inv.clientName}</div><div class="ic-meta">Due ${fmtDate(inv.due)}${inv.notes?' · '+inv.notes:''}</div></div><div style="text-align:right"><div style="font-family:'Syne',sans-serif;font-weight:800;color:${inv.status==='paid'?'var(--green)':inv.status==='overdue'?'var(--red)':'var(--yellow)'}">$${inv.amount.toLocaleString()}</div><span class="badge ${smap[inv.status]||'b-gy'}">${inv.status.charAt(0).toUpperCase()+inv.status.slice(1)}</span></div></div><div class="ic-actions">${inv.status!=='paid'?`<button class="btn btn-success btn-xs" onclick="markInvPaid('${inv.id}')">✓ Mark Paid</button>`:`<span style="font-size:.72rem;color:var(--green)">✓ Paid ${fmtDate(inv.paidDate)}</span>`}<button class="btn btn-danger btn-xs" onclick="deleteInvoice('${inv.id}')">✕</button></div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// REFERRALS
+// ═══════════════════════════════════════════
+async function saveReferral(){
+  const source=document.getElementById('rf-source').value.trim();const prospect=document.getElementById('rf-prospect').value.trim();
+  if(!source||!prospect){toast('⚠️ Source and prospect required');return}
+  if(!S.referrals)S.referrals=[];
+  const r={id:uid(),source,prospect,niche:document.getElementById('rf-niche').value,status:document.getElementById('rf-status').value,notes:document.getElementById('rf-notes').value,date:new Date().toISOString()};
+  S.referrals.push(r);closeM('modal-referral');['rf-source','rf-prospect','rf-notes'].forEach(id=>document.getElementById(id).value='');
+  renderReferrals();toast('🌟 Referral logged!');await dbReferral(r);
+}
+
+async function updateRefStatus(id,status){const r=(S.referrals||[]).find(x=>x.id===id);if(!r)return;r.status=status;renderReferrals();await dbReferral(r)}
+async function deleteRef(id){S.referrals=(S.referrals||[]).filter(x=>x.id!==id);renderReferrals();await dbDel('referrals',id)}
+
+function renderReferrals(){
+  if(!S.referrals)S.referrals=[];document.getElementById('ref-total').textContent=S.referrals.length;document.getElementById('ref-closed').textContent=S.referrals.filter(r=>r.status==='closed').length;
+  const el=document.getElementById('ref-list');
+  if(!S.referrals.length){el.innerHTML=`<div class="empty"><div class="ei">🌟</div><p>No referrals yet.</p><button class="btn btn-primary" onclick="openM('modal-referral')">+ Log Referral</button></div>`;return}
+  const bySource={};S.referrals.forEach(r=>{if(!bySource[r.source])bySource[r.source]=[];bySource[r.source].push(r)});
+  el.innerHTML=Object.entries(bySource).map(([source,refs])=>{const cc=refs.filter(r=>r.status==='closed').length;return`<div class="ic" style="border-left:3px solid var(--yellow)"><div class="ic-top" style="margin-bottom:9px"><div><div class="ic-name">🌟 ${source}</div><div class="ic-meta">${refs.length} referral${refs.length>1?'s':''} · ${cc} closed</div></div>${cc>0?'<span class="badge b-gr">Top Referrer</span>':''}</div>${refs.map(r=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px;margin-bottom:5px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:7px"><div><div style="font-size:.83rem;font-weight:600;color:var(--text)">${r.prospect}</div><div style="font-size:.72rem;color:var(--text2)">${r.niche} · ${fmtDate(r.date)}</div></div><div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0"><select onchange="updateRefStatus('${r.id}',this.value)" style="background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;font-size:.7rem;color:var(--text2)">${['intro','call','closed','lost'].map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}</select><button class="btn btn-danger btn-xs" onclick="deleteRef('${r.id}')">✕</button></div></div></div>`).join('')}</div>`;}).join('');
+}
+
+// ═══════════════════════════════════════════
+// GOALS
+// ═══════════════════════════════════════════
+async function saveGoals(){
+  S.goals={prospects:parseInt(document.getElementById('g-prospects').value)||50,emails:parseInt(document.getElementById('g-emails').value)||100,calls:parseInt(document.getElementById('g-calls').value)||5,mrr:parseInt(document.getElementById('g-mrr').value)||10000};
+  closeM('modal-goals');renderGoals();renderDashboard();toast('🏆 Goals saved!');await dbSettings();
+}
+
+async function logWeeklyActivity(type,count){
+  const wk=getWeekKey();if(!S.weeklyActivity)S.weeklyActivity={};if(!S.weeklyActivity[wk])S.weeklyActivity[wk]={prospects:0,emails:0,calls:0};S.weeklyActivity[wk][type]=(S.weeklyActivity[wk][type]||0)+count;await dbSettings();
+}
+
+function getWeekKey(){const d=new Date();const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);return new Date(d.setDate(diff)).toISOString().split('T')[0]}
+
+function renderGoals(){
+  const wk=getWeekKey();const activity=(S.weeklyActivity&&S.weeklyActivity[wk])||{prospects:0,emails:0,calls:0};const goals=S.goals||{prospects:50,emails:100,calls:5,mrr:10000};const mrr=S.clients.filter(c=>c.status==='active').reduce((s,c)=>s+c.retainer,0);
+  const items=[{key:'prospects',label:'Prospects Added',icon:'🎯',actual:activity.prospects,goal:goals.prospects,color:'var(--accent)'},{key:'emails',label:'Emails Sent',icon:'✉️',actual:activity.emails,goal:goals.emails,color:'var(--yellow)'},{key:'calls',label:'Calls Booked',icon:'📞',actual:activity.calls,goal:goals.calls,color:'var(--orange)'},{key:'mrr',label:'MRR',icon:'💰',actual:mrr,goal:goals.mrr,color:'var(--green)',prefix:'$'}];
+  document.getElementById('goals-content').innerHTML=`<div class="sec-hd" style="margin-top:0"><div class="sec-t">Week of ${new Date(wk).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div><button class="btn btn-ghost btn-sm" onclick="document.getElementById('g-prospects').value='${goals.prospects}';document.getElementById('g-emails').value='${goals.emails}';document.getElementById('g-calls').value='${goals.calls}';document.getElementById('g-mrr').value='${goals.mrr}';openM('modal-goals')">Edit Goals</button></div>${items.map(item=>{const pct=Math.min(100,Math.round((item.actual/item.goal)*100));const done=pct>=100;return`<div class="goal-item"><div class="goal-top"><div class="goal-name">${item.icon} ${item.label}</div><div class="goal-val" style="color:${done?'var(--green)':pct>=50?'var(--yellow)':'var(--text2)'}">${(item.prefix||'')+item.actual.toLocaleString()} / ${(item.prefix||'')+item.goal.toLocaleString()} ${done?'✅':''}</div></div><div class="goal-bar"><div class="goal-fill" style="width:${pct}%;background:${done?'var(--green)':item.color}"></div></div><div style="font-size:.7rem;color:var(--text3);margin-top:4px">${pct}% this week</div></div>`;}).join('')}`;
+}
+
+// ═══════════════════════════════════════════
+// PLAYBOOK
+// ═══════════════════════════════════════════
+function renderPlaybook(){
+  const phases=[
+    {phase:'Phase 1 — Close Day',color:'var(--green)',steps:[{n:1,title:'Send Onboarding Email',desc:'Within 1 hour of closing, send a welcome email setting expectations and asking for the 4 info pieces you need.',link:"nav('scripts');setTimeout(()=>document.querySelectorAll('#page-scripts .tab')[2].click(),100)",lt:'→ Generate Onboarding Email'},{n:2,title:'Collect Payment',desc:'Get paid upfront before any work begins. Use Stripe with auto-billing. Never start without payment.'},{n:3,title:'Add to System',desc:'Add them as a Client to activate MRR and health tracking.',link:"openM('modal-client')",lt:'→ Add Client'}]},
+    {phase:'Phase 2 — Days 1–14: Setup',color:'var(--yellow)',steps:[{n:4,title:'Buy a Sending Domain',desc:'Buy a secondary domain on Namecheap (~$12/year). Never send from their main domain.',tip:'Buy 2–3 domains per client to rotate and scale.'},{n:5,title:'Create Sending Inboxes',desc:'Create 2–3 email accounts. Use Google Workspace ($6/mo per inbox) or Outlook.'},{n:6,title:'Start Domain Warmup',desc:'Add to Warmup Tracker and use Instantly.ai for 14 days.',link:"nav('warmup')",lt:'→ Go to Warmup Tracker'},{n:7,title:'Build Their Lead List',desc:'Build the list of people to email on their behalf. Aim for 500–1,000 verified leads.'},{n:8,title:'Write the Email Sequence',desc:'Generate a 5-email lead gen sequence in Campaigns.',link:"nav('campaigns')",lt:'→ Build Campaign'}]},
+    {phase:'Phase 3 — Days 15–30: Launch',color:'var(--orange)',steps:[{n:9,title:'Launch the Campaign',desc:'Load list and sequence into Instantly.ai. Max 30–40 emails/day. Send Tue–Thu, 8–11am in prospect\'s timezone.',tip:'Start at 20/day. Ramp up each week.'},{n:10,title:'Forward Hot Replies',desc:'When a lead replies with interest, forward immediately: "Hot lead — recommend calling within the hour."'},{n:11,title:'Daily Management (15 min)',desc:'Each morning: check stats, forward leads, remove bounces and unsubscribes.'}]},
+    {phase:'Phase 4 — Monthly: Retain',color:'var(--accent)',steps:[{n:12,title:'Send Monthly Report',desc:'5 days before renewal, generate and send a results email.',link:"nav('reports')",lt:'→ Generate Report'},{n:13,title:'Check Client Health Score',desc:'At Risk = book a call immediately. Don\'t wait for them to cancel.',link:"nav('clients')",lt:'→ View Clients'},{n:14,title:'Ask for a Referral',desc:'"Do you know any other business owners who could use more leads?" One referral skips all cold outreach.',tip:'Referral clients close at 5–10x the rate.'}]},
+  ];
+  document.getElementById('playbook-content').innerHTML=phases.map((ph,pi)=>`<div class="sec-hd" style="${pi===0?'margin-top:0':''}"><div class="sec-t" style="color:${ph.color}">${ph.phase}</div></div>${ph.steps.map(s=>`<div class="pb-step"><div class="pb-num">${s.n}</div><div class="pb-body"><div class="pb-title">${s.title}</div><div class="pb-desc">${s.desc}</div>${s.tip?`<div class="pb-tip">💡 ${s.tip}</div>`:''}${s.link?`<div class="pb-link" onclick="${s.link}">${s.lt}</div>`:''}</div></div>`).join('')}`).join('');
+}
+
+// ═══════════════════════════════════════════
+// FINDER
+// ═══════════════════════════════════════════
+function renderFinder(){
+  const sources=[
+    {icon:'🗺️',name:'Google Maps',sub:'Best free source',bg:'var(--accent-dim)',steps:['Go to maps.google.com on desktop','Search <strong>[niche] near [city]</strong>','Target businesses with 10–100 reviews','Look for those running Google Ads — already buying leads','Grab business name, owner name, and website','Find email via contact page or Hunter.io','Add to Prospects tab ✓']},
+    {icon:'🔭',name:'Apollo.io',sub:'Free tier · Email addresses included',bg:'rgba(59,130,246,.1)',steps:['Sign up free at apollo.io (50 email credits/month)','Go to <strong>Search → People</strong>','Filter: Job Title = "Owner" or "Founder" · Industry = niche · 1–50 employees','Add location filter','Export name, company, email directly']},
+    {icon:'📘',name:'Facebook Ads Library',sub:'Find businesses spending on ads',bg:'var(--orange-dim)',steps:['Go to <strong>facebook.com/ads/library</strong>','Select country → All Ads → search niche keyword','Filter by "Active" ads only','Businesses running ads are already buying leads','Visit page → find website → get email']},
+    {icon:'⭐',name:'Yelp',sub:'Local businesses with clear contact info',bg:'var(--yellow-dim)',steps:['Search yelp.com for niche + city','Filter to 10–50 reviews (sweet spot)','Yelp often shows phone and website directly','Find email via Hunter.io']},
+    {icon:'💼',name:'LinkedIn',sub:'Direct owner access · High response rate',bg:'var(--purple-dim)',steps:['Search: <strong>"owner" + [niche]</strong> in People filters','Add location + company size 1–10 employees','Connect with a short note — don\'t pitch first','After they accept, send outreach','DM response rates are 3–5x higher than cold email']},
+  ];
+  document.getElementById('finder-sources').innerHTML=sources.map((s,i)=>`<div class="lsrc ${i===0?'open':''}"><div class="lsrc-hdr" onclick="this.parentElement.classList.toggle('open')"><div class="lsrc-icon" style="background:${s.bg}">${s.icon}</div><div class="lsrc-info"><div class="lsrc-name">${s.name}</div><div class="lsrc-sub">${s.sub}</div></div><span class="lsrc-tog">▶</span></div><div class="lsrc-body"><ol class="steps">${s.steps.map(step=>`<li>${step}</li>`).join('')}</ol></div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// PROJECTIONS
+// ═══════════════════════════════════════════
+function updateProj(){
+  const pw=+document.getElementById('sl1').value,rr=+document.getElementById('sl2').value/100,cr=+document.getElementById('sl3').value/100,ret=+document.getElementById('sl4').value;
+  document.getElementById('pv1').textContent=pw;document.getElementById('pv2').textContent=document.getElementById('sl2').value+'%';document.getElementById('pv3').textContent=document.getElementById('sl3').value+'%';document.getElementById('pv4').textContent='$'+ret.toLocaleString();
+  const replies=Math.round(pw*4*rr),calls=Math.round(replies*.6),closes=Math.round(calls*cr);
+  document.getElementById('proj-replies').textContent=replies;document.getElementById('proj-calls').textContent=calls;document.getElementById('proj-closes').textContent=closes;document.getElementById('proj-mrr').textContent='$'+(closes*ret).toLocaleString();
+}
+
+// ═══════════════════════════════════════════
+// BADGES
+// ═══════════════════════════════════════════
+function updateBadges(){
+  const overdue=S.prospects.filter(p=>!['booked','closed'].includes(p.status)&&p.lastContacted&&daysSince(p.lastContacted)>=3).length;
+  const tk=new Date().toDateString();const ch=S.checklist[tk]||{};const tasksLeft=DAILY_TASKS.length-Object.values(ch).filter(Boolean).length;
+  const alerts=S.clients.filter(c=>{const m=monthsSince(c.start);return m===3||m===6}).length+S.clients.filter(c=>clientHealth(c).label==='At Risk').length;
+  const total=overdue+tasksLeft+alerts;
+  const b=document.getElementById('nb-today');if(b){b.style.display=total>0?'inline-block':'none';b.textContent=total}
+  const bnb=document.getElementById('bn-badge');if(bnb){bnb.style.display=total>0?'block':'none';bnb.textContent=total}
+  document.getElementById('nb-prospects').textContent=S.prospects.length;document.getElementById('nb-clients').textContent=S.clients.filter(c=>c.status==='active').length;updateInvBadge();
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+initAuth();
+
+</script>
+</body>
+</html>
