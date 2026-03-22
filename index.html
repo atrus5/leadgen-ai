@@ -394,6 +394,20 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
         <div class="np"><div class="np-n">🏦 Mortgage</div><div class="np-v">$3K–10K per loan</div></div>
         <div class="np"><div class="np-n">🛍️ Retail</div><div class="np-v">$200–2K per customer</div></div>
         <div class="np"><div class="np-n">💪 Fitness</div><div class="np-v">$1K–5K per member</div></div>
+        <div class="np"><div class="np-n">🔧 Plumbing</div><div class="np-v">$2K–8K per job</div></div>
+        <div class="np"><div class="np-n">💨 Duct Cleaning</div><div class="np-v">$500–2K per home</div></div>
+        <div class="np"><div class="np-n">🏚️ Gutters</div><div class="np-v">$500–3K per job</div></div>
+        <div class="np"><div class="np-n">❄️ Snow Removal</div><div class="np-v">$1K–5K per season</div></div>
+        <div class="np"><div class="np-n">🌿 Grass & Lawn</div><div class="np-v">$1K–4K per season</div></div>
+        <div class="np"><div class="np-n">🌳 Tree Service</div><div class="np-v">$1K–10K per job</div></div>
+        <div class="np"><div class="np-n">🧓 Care Aid</div><div class="np-v">$2K–6K per client</div></div>
+        <div class="np"><div class="np-n">🔩 Mechanic</div><div class="np-v">$500–5K per repair</div></div>
+        <div class="np"><div class="np-n">🧹 Cleaning Service</div><div class="np-v">$200–800/mo recurring</div></div>
+        <div class="np"><div class="np-n">🐛 Pest Control</div><div class="np-v">$500–2K/yr recurring</div></div>
+        <div class="np"><div class="np-n">🏊 Pool Service</div><div class="np-v">$1K–3K/mo recurring</div></div>
+        <div class="np"><div class="np-n">🎨 Painting</div><div class="np-v">$2K–15K per job</div></div>
+        <div class="np"><div class="np-n">💦 Pressure Washing</div><div class="np-v">$300–2K per job</div></div>
+        <div class="np"><div class="np-n">⚡ Electrician</div><div class="np-v">$1K–10K per job</div></div>
       </div>
       <div class="sec-hd"><div class="sec-t">Lead Sources</div></div>
       <div id="finder-sources"></div>
@@ -431,7 +445,7 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
           <div class="fg"><label class="fl">Owner Name</label><input class="fi" id="out-contact" placeholder="John"></div>
         </div>
         <div class="frow">
-          <div class="fg"><label class="fl">Niche</label><select class="fs" id="out-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option></select></div>
+          <div class="fg"><label class="fl">Niche</label><select class="fs" id="out-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option><option>Plumbing</option><option>Duct Cleaning</option><option>Gutters</option><option>Snow Removal</option><option>Grass & Lawn</option><option>Tree Service</option><option>Care Aid</option><option>Mechanic</option><option>Cleaning Service</option><option>Pest Control</option><option>Pool Service</option><option>Painting</option><option>Pressure Washing</option><option>Electrician</option></select></div>
           <div class="fg"><label class="fl">Email Type</label><select class="fs" id="out-type"><option value="cold">Cold Outreach</option><option value="fu1">Follow-up #1 (Day 3)</option><option value="fu2">Follow-up #2 (Day 7)</option><option value="break">Breakup Email</option></select></div>
         </div>
         <button class="btn btn-primary btn-full" onclick="genOutreach()">✨ Generate Email</button>
@@ -523,7 +537,7 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
       <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:14px">
         <div class="fg"><label class="fl">Paste the Prospect's Reply</label><textarea class="fta" id="ar-reply" placeholder="Paste the email or message they sent you here..." style="min-height:100px"></textarea></div>
         <div class="frow">
-          <div class="fg"><label class="fl">Their Niche</label><select class="fs" id="ar-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option><option>Fitness</option></select></div>
+          <div class="fg"><label class="fl">Their Niche</label><select class="fs" id="ar-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option><option>Plumbing</option><option>Duct Cleaning</option><option>Gutters</option><option>Snow Removal</option><option>Grass & Lawn</option><option>Tree Service</option><option>Care Aid</option><option>Mechanic</option><option>Cleaning Service</option><option>Pest Control</option><option>Pool Service</option><option>Painting</option><option>Pressure Washing</option><option>Electrician</option></select></div>
           <div class="fg"><label class="fl">Email Stage</label><select class="fs" id="ar-stage"><option>Cold email reply</option><option>Follow-up reply</option><option>Post-call follow-up</option></select></div>
         </div>
         <button class="btn btn-primary btn-full" onclick="analyzeReply()">🤖 Analyze Reply</button>
@@ -540,7 +554,7 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
       <div class="tip-box"><strong>✍️ Generate 5 subject line variants</strong> with AI scoring for each one. Save winners to your template library.</div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:14px">
         <div class="frow">
-          <div class="fg"><label class="fl">Niche</label><select class="fs" id="sl-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option><option>Fitness</option></select></div>
+          <div class="fg"><label class="fl">Niche</label><select class="fs" id="sl-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option><option>Plumbing</option><option>Duct Cleaning</option><option>Gutters</option><option>Snow Removal</option><option>Grass & Lawn</option><option>Tree Service</option><option>Care Aid</option><option>Mechanic</option><option>Cleaning Service</option><option>Pest Control</option><option>Pool Service</option><option>Painting</option><option>Pressure Washing</option><option>Electrician</option></select></div>
           <div class="fg"><label class="fl">Email Type</label><select class="fs" id="sl-type"><option>Cold outreach</option><option>Follow-up</option><option>Breakup</option></select></div>
         </div>
         <div class="fg"><label class="fl">Angle / Hook (optional)</label><input class="fi" id="sl-angle" placeholder="e.g. local competitor reference, seasonal urgency, pain point..."></div>
@@ -572,7 +586,7 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
       <div id="scr-obj">
         <div class="frow" style="margin-bottom:9px">
           <div class="fg"><label class="fl">Objection</label><select class="fs" id="obj-sel"><option>"I'm not interested"</option><option>"We already have someone"</option><option>"How do I know it works?"</option><option>"It's too expensive"</option><option>"I need to think about it"</option><option>"Send me info first"</option><option>"We don't have the budget"</option></select></div>
-          <div class="fg"><label class="fl">Niche</label><select class="fs" id="obj-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option></select></div>
+          <div class="fg"><label class="fl">Niche</label><select class="fs" id="obj-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option><option>Plumbing</option><option>Duct Cleaning</option><option>Gutters</option><option>Snow Removal</option><option>Grass & Lawn</option><option>Tree Service</option><option>Care Aid</option><option>Mechanic</option><option>Cleaning Service</option><option>Pest Control</option><option>Pool Service</option><option>Painting</option><option>Pressure Washing</option><option>Electrician</option></select></div>
         </div>
         <button class="btn btn-primary btn-full" onclick="genScript('obj')" style="margin-bottom:11px">✨ Generate Response</button>
         <div class="ai-box" id="obj-out"><div class="ai-ph"><div class="sp">🛡️</div><p>Generate a confident response to any objection.</p></div></div>
@@ -711,7 +725,7 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
     <div class="mbody">
       <div class="fg"><label class="fl">Business Name *</label><input class="fi" id="pf-name" placeholder="Green Valley Dental"></div>
       <div class="frow">
-        <div class="fg"><label class="fl">Niche</label><select class="fs" id="pf-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option><option>Other</option></select></div>
+        <div class="fg"><label class="fl">Niche</label><select class="fs" id="pf-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option><option>Plumbing</option><option>Duct Cleaning</option><option>Gutters</option><option>Snow Removal</option><option>Grass & Lawn</option><option>Tree Service</option><option>Care Aid</option><option>Mechanic</option><option>Cleaning Service</option><option>Pest Control</option><option>Pool Service</option><option>Painting</option><option>Pressure Washing</option><option>Electrician</option><option>Other</option></select></div>
         <div class="fg"><label class="fl">Location</label><input class="fi" id="pf-loc" placeholder="Austin, TX"></div>
       </div>
       <div class="frow">
@@ -745,7 +759,7 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
     <div class="mbody">
       <div class="fg"><label class="fl">Business Name *</label><input class="fi" id="cf-name" placeholder="Johnson Roofing LLC"></div>
       <div class="frow">
-        <div class="fg"><label class="fl">Niche</label><select class="fs" id="cf-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Other</option></select></div>
+        <div class="fg"><label class="fl">Niche</label><select class="fs" id="cf-niche"><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option><option>Plumbing</option><option>Duct Cleaning</option><option>Gutters</option><option>Snow Removal</option><option>Grass & Lawn</option><option>Tree Service</option><option>Care Aid</option><option>Mechanic</option><option>Cleaning Service</option><option>Pest Control</option><option>Pool Service</option><option>Painting</option><option>Pressure Washing</option><option>Electrician</option><option>Other</option></select></div>
         <div class="fg"><label class="fl">Retainer ($/mo) *</label><input class="fi" id="cf-retainer" type="number" placeholder="2500" inputmode="numeric"></div>
       </div>
       <div class="frow">
@@ -791,7 +805,7 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
     <div class="mbody">
       <div class="frow">
         <div class="fg"><label class="fl">Type</label><select class="fs" id="tf-type"><option value="subject">Subject Line</option><option value="body">Email Body</option><option value="sequence">Full Sequence</option></select></div>
-        <div class="fg"><label class="fl">Niche</label><select class="fs" id="tf-niche"><option>Any</option><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Retail</option></select></div>
+        <div class="fg"><label class="fl">Niche</label><select class="fs" id="tf-niche"><option>Any</option><option>Roofing</option><option>Real Estate</option><option>Dental</option><option>HVAC</option><option>Legal</option><option>Mortgage</option><option>Insurance</option><option>Fitness</option><option>Retail</option><option>Chiropractic</option><option>Plumbing</option><option>Duct Cleaning</option><option>Gutters</option><option>Snow Removal</option><option>Grass & Lawn</option><option>Tree Service</option><option>Care Aid</option><option>Mechanic</option><option>Cleaning Service</option><option>Pest Control</option><option>Pool Service</option><option>Painting</option><option>Pressure Washing</option><option>Electrician</option><option>Other</option></select></div>
       </div>
       <div class="fg"><label class="fl">Template Name *</label><input class="fi" id="tf-name" placeholder="Pain point opener — Roofing"></div>
       <div class="fg"><label class="fl">Content *</label><textarea class="fta" id="tf-content" placeholder="Paste subject line, email, or sequence here..." style="min-height:110px"></textarea></div>
@@ -1169,7 +1183,7 @@ function clientHealth(c){
 
 function leadScore(p){
   let s=0;if(p.website)s+=2;if(p.email)s+=1;if(p.contact)s+=1;
-  if(['Roofing','Real Estate','Legal','Mortgage','Dental','HVAC'].includes(p.niche))s+=2;
+  if(['Roofing','Real Estate','Legal','Mortgage','Dental','HVAC','Plumbing','Gutters','Tree Service','Snow Removal','Mechanic','Cleaning Service','Pest Control','Pool Service','Painting','Pressure Washing','Electrician'].includes(p.niche))s+=2;
   if(p.source==='Facebook Ads Library')s+=2;if(p.source==='Apollo.io')s+=1;
   return Math.min(10,s);
 }
