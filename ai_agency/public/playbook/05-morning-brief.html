@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>05 · Morning brief · LeadGen AI Playbook</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}article p{line-height:1.7}article h2{font-size:1.25rem;font-weight:700;margin-top:1.5rem;margin-bottom:.5rem}article li{margin-bottom:.4rem}pre{background:#0b1220;color:#a7f3d0;border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:ui-monospace,"JetBrains Mono",Menlo,monospace;font-size:13px}code{background:#0b1220;color:#a7f3d0;padding:1px 5px;border-radius:4px}</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="max-w-3xl mx-auto px-6 py-10">
+  <a href="/playbook/" class="text-sm text-sky-400 hover:text-sky-300">← Back to playbook</a>
+  <h1 class="text-3xl font-extrabold mt-3 mb-2">Stage 05 · Morning brief</h1>
+  <p class="text-sm text-slate-500 font-mono mb-8">A single email arrives at your configured time with the new prospects you have to act on today.</p>
+
+  <article class="space-y-4 text-slate-200">
+
+    <h2>What's in the email</h2>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li>Total new prospects inserted since 00:00, grouped by client.</li>
+      <li>Source attribution (Apollo vs Places) — useful for deciding where to invest.</li>
+      <li>A one-line "Open LeadGen AI" CTA.</li>
+    </ul>
+
+    <h2>What you actually do</h2>
+    <ol class="list-decimal pl-6 text-slate-300">
+      <li>Open the wizard UI in a browser.</li>
+      <li>Click <code>Prospects</code>. Filter by status = <strong>new</strong>.</li>
+      <li>For each prospect with a contact email, click "Generate cold email" → review the niche-tuned opener → click "Send".</li>
+      <li>For prospects without a contact email (often from Places), open their website and either:
+        <ul class="list-disc pl-6 mt-2">
+          <li>Copy the contact form URL into the prospect's <code>notes</code> field, or</li>
+          <li>Mark them <code>no_email</code> on the database so they're not re-targetted tomorrow.</li>
+        </ul>
+      </li>
+      <li>For prospects with poor score (&lt;4), keep them in the list — they'll become the slow-pipeline batch.</li>
+    </ol>
+
+    <h2>Daily checklist (rough time per)</h2>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li>Review new prospects (15 min)</li>
+      <li>Send 8–12 cold emails (25 min)</li>
+      <li>Reply to anyone whose reply came in overnight (15 min)</li>
+      <li>Update stale prospects (5 min)</li>
+    </ul>
+
+    <h2>Send your first manual email</h2>
+    <pre class="bg-slate-900 rounded-xl p-4 text-xs overflow-x-auto">curl -X POST http://your-host/api/email/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prospect_id": "abc123...",
+    "step": "cold"
+  }'</pre>
+    <p>The system will look up the prospect, generate a niche-tuned cold email via the templates + Llama 3 (if running), and send it via SMTP — respecting the daily quota.</p>
+
+    <h2>Sending checks</h2>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li>Quota exceeded? Wait until tomorrow, or move the message to the slow queue.</li>
+      <li>Send returns <code>duplicate_step</code>? You already sent this step to this prospect in the last 7 days. Pick a different prospect.</li>
+      <li>Send errors with <code>smtp_auth</code>? Test SMTP from the wizard — credentials probably rotated.</li>
+    </ul>
+
+  </article>
+
+  <p class="text-sm mt-12"><a href="/playbook/04-hunt-nightly.html" class="text-sky-400 hover:text-sky-300">← Previous</a> · <a href="/playbook/06-outreach.html" class="text-sky-400 hover:text-sky-300">Next: 06 · Outreach →</a></p>
+</div>
+</body>
+</html>

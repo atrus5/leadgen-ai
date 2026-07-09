@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LeadGen AI — Setup Wizard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .step[aria-current="step"] > div { border-left-color: #38bdf8; }
+  pre.dns { background:#0b1220; color:#a7f3d0; border-radius:8px; padding:14px 16px;
+            overflow-x:auto; font-family: ui-monospace, "JetBrains Mono", Menlo, monospace; font-size:13px; }
+  .copied { background:#064e3b; color:#d1fae5; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="max-w-6xl mx-auto px-6 py-10">
+  <header class="mb-10 flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">LeadGen AI · Setup Wizard</h1>
+      <p class="text-sm text-slate-400 mt-1">Run from start-to-finish. Every step writes into the SQLite database and the scheduler starts at the end.</p>
+    </div>
+    <a href="/playbook/" class="text-sm text-sky-400 hover:text-sky-300">📖 Read full playbook →</a>
+  </header>
+
+  <div class="grid lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
+
+    <aside class="space-y-2 text-sm">
+      <ol id="stepNav" class="space-y-1">
+        <li class="step rounded px-3 py-2 cursor-pointer hover:bg-slate-800 flex items-center gap-3" data-step="1"><span class="w-6 h-6 rounded-full border border-slate-700 grid place-items-center text-xs">1</span>Domain</li>
+        <li class="step rounded px-3 py-2 cursor-pointer hover:bg-slate-800 flex items-center gap-3" data-step="2"><span class="w-6 h-6 rounded-full border border-slate-700 grid place-items-center text-xs">2</span>DNS records</li>
+        <li class="step rounded px-3 py-2 cursor-pointer hover:bg-slate-800 flex items-center gap-3" data-step="3"><span class="w-6 h-6 rounded-full border border-slate-700 grid place-items-center text-xs">3</span>Mailbox</li>
+        <li class="step rounded px-3 py-2 cursor-pointer hover:bg-slate-800 flex items-center gap-3" data-step="4"><span class="w-6 h-6 rounded-full border border-slate-700 grid place-items-center text-xs">4</span>SMTP / IMAP</li>
+        <li class="step rounded px-3 py-2 cursor-pointer hover:bg-slate-800 flex items-center gap-3" data-step="5"><span class="w-6 h-6 rounded-full border border-slate-700 grid place-items-center text-xs">5</span>API keys</li>
+        <li class="step rounded px-3 py-2 cursor-pointer hover:bg-slate-800 flex items-center gap-3" data-step="6"><span class="w-6 h-6 rounded-full border border-slate-700 grid place-items-center text-xs">6</span>Schedule</li>
+      </ol>
+      <p id="saveBadge" class="hidden text-xs text-emerald-400 mt-4 px-3">✓ saved</p>
+    </aside>
+
+    <main class="bg-slate-900 border border-slate-800 rounded-2xl p-8 space-y-10">
+
+      <!-- STEP 1: DOMAIN ----------------------------------------------------------- -->
+      <section class="step-body" data-step="1">
+        <h2 class="text-2xl font-bold mb-2">Pick a domain</h2>
+        <p class="text-sm text-slate-400 mb-5">The domain is your outbound sending identity. Pick one that *sounds like a service business*, not "youragency.io." Recipients see it in the From line of every cold email.</p>
+
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Brand name (used to suggest domains)</label>
+        <input id="brandInput" type="text" placeholder="Acme Outreach"
+               class="w-full bg-slate-950 border border-slate-700 focus:border-sky-500 rounded-lg p-3 text-sm mb-4">
+
+        <div id="suggestions" class="grid sm:grid-cols-2 gap-3 mb-6"></div>
+
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Final domain you'll buy</label>
+        <div class="flex gap-2">
+          <input id="chosenDomain" type="text" placeholder="getacmeoutreach.com"
+                 class="flex-1 bg-slate-950 border border-slate-700 focus:border-sky-500 rounded-lg p-3 text-sm font-mono">
+          <button id="saveDomain" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg px-4 text-sm">Save</button>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">Buy at <a class="text-sky-400 hover:underline" href="https://www.namecheap.com/" target="_blank" rel="noopener noreferrer">Namecheap</a>, <a class="text-sky-400 hover:underline" href="https://www.cloudflare.com/products/registrar/" target="_blank" rel="noopener noreferrer">Cloudflare Registrar</a>, or <a class="text-sky-400 hover:underline" href="https://porkbun.com/" target="_blank" rel="noopener noreferrer">Porkbun</a>. .com is the cheapest to maintain reputation; .co and .net work too.</p>
+      </section>
+
+      <!-- STEP 2: DNS RECORDS ----------------------------------------------------------- -->
+      <section class="step-body hidden" data-step="2">
+        <h2 class="text-2xl font-bold mb-2">DNS records (copy-paste)</h2>
+        <p class="text-sm text-slate-400 mb-5">Add these in your registrar's DNS panel. Skipping DKIM/SPF/DMARC is the #1 reason cold emails land in spam.</p>
+
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-200 mb-2">SPF — authorise your mail server to send on your behalf</h3>
+            <pre class="dns">Type:    TXT
+Host:    @
+Value:   v=spf1 include:_spf.google.com ~all
+        <!-- Or if using Zoho: v=spf1 include:zoho.com ~all -->
+        <!-- Or for SES/in-house: v=spf1 ip4:YOUR.SMTP.IP ~all --></pre>
+            <button class="copy text-xs text-sky-400 hover:text-sky-300" data-target="dns-spf">📋 Copy</button>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-slate-200 mb-2">DKIM — proves your mail wasn't tampered with</h3>
+            <p class="text-xs text-slate-500 mb-2">Your mail provider generates the DKIM key. Paste it as a TXT record on the selector host shown.</p>
+            <pre class="dns">Type:    TXT
+Host:    google._domainkey          <!-- (or your provider's selector) -->
+Value:   v=DKIM1; k=rsa; p=MIGfMA0GCSq...   (paste what Google/Zoho/MP shows)</pre>
+            <p class="text-xs text-slate-500 mt-1">Per-host instructions: Google Workspace → Admin → Apps → Gmail → Authenticate email. Zoho Mail → Setup → Email Authentication. Microsoft 365 → Security → Email authentication.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-slate-200 mb-2">DMARC — tells receivers what to do when SPF/DKIM fails</h3>
+            <pre class="dns">Type:    TXT
+Host:    _dmarc
+Value:   v=DMARC1; p=none; rua=mailto:dmarc@YOUR-DOMAIN.COM</pre>
+            <button class="copy text-xs text-sky-400 hover:text-sky-300">📋 Copy</button>
+            <p class="text-xs text-slate-500 mt-1">Start with <code class="text-sky-300">p=none</code> (monitor only); flip to <code class="text-sky-300">p=quarantine</code> after week 3 if your reports are clean.</p>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-slate-200 mb-2">MX — so replies come back to you</h3>
+            <pre class="dns">Type:    MX
+Host:    @
+Value:   1 ASPMX.L.GOOGLE.COM       <!-- Google Workspace -->
+        10 ALT1.ASPMX.L.GOOGLE.COM
+        10 ALT2.ASPMX.L.GOOGLE.COM</pre>
+            <button class="copy text-xs text-sky-400 hover:text-sky-300">📋 Copy</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3: MAILBOX ----------------------------------------------------------- -->
+      <section class="step-body hidden" data-step="3">
+        <h2 class="text-2xl font-bold mb-2">Pick a mailbox provider</h2>
+        <p class="text-sm text-slate-400 mb-5">You need real IMAP + SMTP, not a Gmail alias.</p>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5">
+            <h3 class="font-bold mb-1">Google Workspace</h3>
+            <p class="text-xs text-slate-400 mb-2">$7/user/mo. Best deliverability of the three. Branded as your domain.</p>
+            <p class="text-xs text-slate-500">Steps: <a class="text-sky-400 hover:underline" href="https://workspace.google.com/" target="_blank" rel="noopener noreferrer">workspace.google.com</a> → Add domain → Verify ownership → Create user hello@your-domain.com.</p>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5">
+            <h3 class="font-bold mb-1">Zoho Mail (free tier)</h3>
+            <p class="text-xs text-slate-400 mb-2">Free up to 5 users. Long setup time but it works.</p>
+            <p class="text-xs text-slate-500">Steps: <a class="text-sky-400 hover:underline" href="https://www.zoho.com/mail/" target="_blank" rel="noopener noreferrer">zoho.com/mail</a> → Add domain → Verify TXT record → Enable IMAP.</p>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5">
+            <h3 class="font-bold mb-1">ForwardEmail.net</h3>
+            <p class="text-xs text-slate-400 mb-2">Free DNS-level forwarding to your existing Gmail. IMAP not included.</p>
+            <p class="text-xs text-slate-500">Only recommended if you'll be sending through Amazon SES or a non-IMAP relay.</p>
+          </div>
+        </div>
+
+        <div class="bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-lg p-4 text-sm mt-6">
+          ⚠️ Don't use: (1) a regular Gmail address (you can't get branded From, deliverability tanks), (2) Yahoo/AOL (low reputation in B2B), (3) any "verify your domain later" trial.
+        </div>
+      </section>
+
+      <!-- STEP 4: SMTP / IMAP ----------------------------------------------------------- -->
+      <section class="step-body hidden" data-step="4">
+        <h2 class="text-2xl font-bold mb-2">Enter SMTP / IMAP credentials</h2>
+        <p class="text-sm text-slate-400 mb-5">These are the credentials the app uses to send cold emails and read replies.</p>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5">
+            <h3 class="text-sm font-semibold mb-3">SMTP (outbound)</h3>
+            <label class="block text-xs text-slate-400 mb-1">Host</label>
+            <input data-key="agent.smtp_host" placeholder="smtp.gmail.com"
+                   class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm mb-3 font-mono">
+            <label class="block text-xs text-slate-400 mb-1">Port</label>
+            <input data-key="agent.smtp_port" value="587"
+                   class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm mb-3 font-mono">
+            <label class="block text-xs text-slate-400 mb-1">User / From address</label>
+            <input data-key="agent.smtp_user" placeholder="hello@YOUR-DOMAIN.com"
+                   class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm mb-3 font-mono">
+            <label class="block text-xs text-slate-400 mb-1">App password</label>
+            <input data-key="agent.smtp_pass" type="password"
+                   class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm mb-3 font-mono">
+            <select data-key="agent.smtp_tls"
+                    class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm mb-3">
+              <option value="starttls">STARTTLS (port 587)</option>
+              <option value="ssl">SSL/TLS (port 465)</option>
+              <option value="none">Plain (not recommended)</option>
+            </select>
+            <button data-action="test-smtp"
+                    class="mt-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg px-3 py-2 text-xs w-full">Test SMTP connection</button>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-5">
+            <h3 class="text-sm font-semibold mb-3">IMAP (inbound replies)</h3>
+            <label class="block text-xs text-slate-400 mb-1">Host</label>
+            <input data-key="agent.imap_host" placeholder="imap.gmail.com"
+                   class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm mb-3 font-mono">
+            <label class="block text-xs text-slate-400 mb-1">Port</label>
+            <input data-key="agent.imap_port" value="993"
+                   class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm mb-3 font-mono">
+            <label class="block text-xs text-slate-400 mb-1">Username</label>
+            <input data-key="agent.imap_user" placeholder="hello@YOUR-DOMAIN.com"
+                   class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm mb-3 font-mono">
+            <label class="block text-xs text-slate-400 mb-1">App password</label>
+            <input data-key="agent.imap_pass" type="password"
+                   class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm mb-3 font-mono">
+            <button data-action="test-imap"
+                    class="mt-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg px-3 py-2 text-xs w-full">Test IMAP connection</button>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-500 mt-4">Common presets:
+          <button class="text-sky-400 hover:text-sky-300 ml-1 preset" data-preset="gmail">gmail</button>·
+          <button class="text-sky-400 hover:text-sky-300 preset" data-preset="workspace">workspace</button>·
+          <button class="text-sky-400 hover:text-sky-300 preset" data-preset="zoho">zoho</button>·
+          <button class="text-sky-400 hover:text-sky-300 preset" data-preset="ses">amazon-ses</button>
+        </p>
+      </section>
+
+      <!-- STEP 5: API KEYS ----------------------------------------------------------- -->
+      <section class="step-body hidden" data-step="5">
+        <h2 class="text-2xl font-bold mb-2">Connect the data sources</h2>
+        <p class="text-sm text-slate-400 mb-5">Both have generous free tiers. Apollo is the better source for B2B prospects with verified decision-maker email; Google Places is better for *local* service businesses (HVAC, plumbing, dentists).</p>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold">Apollo.io</h3>
+            <label class="text-xs flex items-center gap-2"><input type="checkbox" data-key="apis.apollo_use" class="setKey" checked> Use Apollo</label>
+          </div>
+          <p class="text-xs text-slate-500 mb-2">Sign up at <a class="text-sky-400 hover:underline" href="https://www.apollo.io/" target="_blank" rel="noopener noreferrer">apollo.io</a> → Settings → Integrations → API. Free trail gives 10k credits/mo.</p>
+          <input data-key="apis.apollo_api_key" type="password" placeholder="apollo_api_key"
+                 class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm font-mono">
+        </div>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold">Google Places API (New)</h3>
+            <label class="text-xs flex items-center gap-2"><input type="checkbox" data-key="apis.google_places_use" class="setKey" checked> Use Places</label>
+          </div>
+          <p class="text-xs text-slate-500 mb-2">Google Cloud → APIs → Places API (New) → Enable billing → create API key. ~$32 / 1000 calls.</p>
+          <input data-key="apis.google_places_api_key" type="password" placeholder="AIza..."
+                 class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm font-mono">
+        </div>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 mt-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold">Local LLM (Ollama · llama3)</h3>
+            <label class="text-xs flex items-center gap-2"><input type="checkbox" checked disabled> Personalises opener copy</label>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Ollama runs at <code class="text-sky-300">http://localhost:11434</code>. The agency app uses it to lightly rewrite each opener so it reads like a person wrote it (rather than a template). If Ollama is offline, the renderer falls back to the pure template — campaigns still send, copy just feels less personal.</p>
+          <label class="block text-xs text-slate-400 mb-1">Model name (must be pulled locally)</label>
+          <input data-key="apis.ollama_model" value="llama3"
+                 class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm font-mono mb-3">
+          <button data-action="test-llm"
+                  class="mt-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg px-3 py-2 text-xs w-full">Test local LLM (llama3)</button>
+        </div>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 mt-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold">Open-rate tracking (1×1 pixel)</h3>
+            <label class="text-xs flex items-center gap-2"><input type="checkbox" data-key="tracking.enabled" class="setKey"> Enable tracking</label>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Embeds an invisible GIF in each cold email so the dashboard can compute open rate per client. Requires the Flask app to be reachable from the public internet (Caddy proxies HTTPS to it on :5000). Disable for compliance-sensitive sends (GDPR-strict EU recipients).</p>
+          <label class="block text-xs text-slate-400 mb-1">Public base URL (matches your Caddy vhost)</label>
+          <input data-key="tracking.base_url" placeholder="https://agency.example.com"
+                 class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm font-mono mb-3">
+          <button data-action="test-tracking"
+                  class="mt-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg px-3 py-2 text-xs w-full">Test tracking pixel URL</button>
+        </div>
+      </section>
+
+      <!-- STEP 6: SCHEDULE ----------------------------------------------------------- -->
+      <section class="step-body hidden" data-step="6">
+        <h2 class="text-2xl font-bold mb-2">Start the engine</h2>
+        <p class="text-sm text-slate-400 mb-5">Once you check these, the scheduler will start when this Flask process boots. You're done.</p>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-3">
+          <label class="flex items-center gap-3 text-sm">
+            <input type="checkbox" data-key="scheduler.enabled" class="setKey" checked>
+            Enable background scheduler
+          </label>
+          <label class="flex items-center gap-3 text-sm">
+            <input type="checkbox" data-key="scheduler.run_nightly_hunt" class="setKey" checked>
+            Run <strong>nightly hunt</strong> every night
+          </label>
+          <label class="flex items-center gap-3 text-sm">
+            <input type="checkbox" data-key="scheduler.run_morning_brief" class="setKey" checked>
+            Email me a <strong>morning brief</strong> at the hour below
+          </label>
+          <label class="flex items-center gap-3 text-sm">
+            <input type="checkbox" data-key="scheduler.run_reply_poller" class="setKey" checked>
+            Poll inbox every 15 minutes and forward HOT replies
+          </label>
+
+          <div class="grid grid-cols-2 gap-3 pt-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Morning brief hour (0–23)</label>
+              <input data-key="agent.morning_brief_hour" value="8" class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Nightly hunt hour (0–23)</label>
+              <input data-key="agent.nightly_hunt_hour" value="2" class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm">
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 rounded-lg p-4 text-sm mt-6">
+          ✓ You can change any of this from <code class="text-emerald-100">POST /api/settings</code> at any time.
+        </div>
+
+        <div class="flex flex-wrap gap-3 pt-2">
+          <button data-action="trigger-nightly" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg px-4 py-2 text-sm">🌙 Run nightly now (manual)</button>
+          <button data-action="trigger-brief" class="bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold rounded-lg px-4 py-2 text-sm">☀️ Send morning brief now</button>
+          <button data-action="trigger-check" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg px-4 py-2 text-sm">📥 Check inbox now</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script>
+const BRANDS = [
+  /get(.{1,15})\.com/,
+  /(.{1,15})hq\.com/,
+  /(.{1,15})reach\.com/,
+  /(.{1,15})sales\.com/,
+  /(.{1,15})outreach\.com/,
+];
+function pickSuggestions(brand){
+  const b = brand.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if(b.length < 3) return [];
+  return [
+    `get${b}.com`, `${b}hq.com`, `${b}sales.com`, `${b}outreach.com`,
+    `${b}-leads.com`, `${b}.co`, `try${b}.com`, `talkto${b}.com`,
+  ];
+}
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+function showStep(n){
+  $$('#stepNav .step').forEach(s => s.setAttribute('aria-current', s.dataset.step == n ? 'step' : 'false'));
+  $$('.step-body').forEach(s => s.classList.toggle('hidden', s.dataset.step != n));
+}
+$('#stepNav').addEventListener('click', e => {
+  const li = e.target.closest('.step'); if(!li) return;
+  showStep(li.dataset.step);
+});
+$('#brandInput')?.addEventListener('input', e => {
+  const sug = pickSuggestions(e.target.value);
+  $('#suggestions').innerHTML = sug.map(s =>
+    `<button type="button" class="sug bg-slate-950 border border-slate-800 hover:border-sky-500 rounded-lg p-3 text-left text-sm font-mono" data-v="${s}">${s}</button>`
+  ).join('') || '<p class="text-xs text-slate-500 col-span-2">Type 3+ characters to see suggestions.</p>';
+});
+$('#suggestions')?.addEventListener('click', e => {
+  const b = e.target.closest('.sug'); if(!b) return;
+  $('#chosenDomain').value = b.dataset.v;
+});
+$('#saveDomain').addEventListener('click', async () => {
+  const d = $('#chosenDomain').value.trim().toLowerCase();
+  if(!d) return;
+  // Save as both from_address and the warmup domain
+  await fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({key:'agent.from_address', value:`hello@${d}`})});
+  await fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({key:'agent.smtp_user', value:`hello@${d}`})});
+  await fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({key:'agent.imap_user', value:`hello@${d}`})});
+  await fetch('/api/warmups', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({domain:d, from_address:`hello@${d}`, start_date:new Date().toISOString().slice(0,10)})});
+  showSaved();
+});
+
+async function setKey(key, value, isCheckbox){
+  // Transform "agent.smtp_host" → put under SMTP block of "agent" key
+  const [top, sub] = key.split('.', 2);
+  const cur = await fetch('/api/settings').then(r => r.json()).then(j => j.data[top] || {});
+  if(isCheckbox) cur[sub] = !!value; else cur[sub] = value;
+  await fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({key: top, value: cur})});
+  showSaved();
+}
+$$('.setKey').forEach(el => el.addEventListener('input', e => setKey(e.target.dataset.key, e.target.value, el.type==='checkbox')));
+$$('.setKey').forEach(el => el.addEventListener('change', e => setKey(e.target.dataset.key, e.target.checked, true)));
+
+// DNS copy buttons + run-now actions: one block, captured once at load.
+const actionLabels = {};
+$$('[data-action]').forEach(btn => {
+  actionLabels[btn.dataset.action] = btn.innerText;
+  btn.addEventListener('click', async () => {
+    const a = btn.dataset.action;
+    btn.disabled = true;
+    btn.innerText = '… ' + a;
+    let endpoint = null, body = null;
+    if(a === 'test-smtp') endpoint = '/api/settings/test-smtp';
+    if(a === 'test-imap') endpoint = '/api/settings/test-imap';
+    if(a === 'test-llm')  endpoint = '/api/settings/test-llm';
+    if(a === 'test-tracking') endpoint = '/api/settings/test-tracking';
+    if(a === 'trigger-nightly') endpoint = '/api/jobs/run', body = JSON.stringify({name:'nightly_hunt'});
+    if(a === 'trigger-brief')   endpoint = '/api/jobs/run', body = JSON.stringify({name:'morning_brief'});
+    if(a === 'trigger-check')   endpoint = '/api/jobs/run', body = JSON.stringify({name:'reply_poller'});
+    try{
+      const r = await fetch(endpoint, {method:'POST', headers:{'Content-Type':'application/json'}, body});
+      const j = await r.json();
+      btn.innerText = j.ok ? '✅ done' : '❌ ' + (j.error || 'failed');
+      if(!j.ok) btn.classList.add('bg-red-500');
+    } catch(e){
+      btn.innerText = '❌ network';
+    }
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.classList.remove('bg-red-500');
+      btn.innerText = actionLabels[a] || a;
+    }, 3500);
+  });
+});
+
+// DNS copy buttons: copy the previous sibling <pre>'s text to the clipboard.
+document.body.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.copy');
+  if (!btn) return;
+  const pre = btn.previousElementSibling;
+  if (!pre || pre.tagName !== 'PRE') return;
+  try {
+    await navigator.clipboard.writeText(pre.innerText);
+    const old = btn.innerText;
+    btn.innerText = '✓ copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.innerText = old; btn.classList.remove('copied'); }, 1500);
+  } catch (err) {
+    btn.innerText = '❌ copy failed';
+    setTimeout(() => { btn.innerText = '📋 Copy'; }, 1500);
+  }
+});
+
+const PRESETS = {
+  gmail:   {smtp_host:'smtp.gmail.com',     smtp_port:587, imap_host:'imap.gmail.com',    imap_port:993, smtp_tls:'starttls', imap_ssl:true},
+  workspace:{smtp_host:'smtp.gmail.com',    smtp_port:587, imap_host:'imap.gmail.com',    imap_port:993, smtp_tls:'starttls', imap_ssl:true},
+  zoho:    {smtp_host:'smtp.zoho.com',      smtp_port:587, imap_host:'imap.zoho.com',     imap_port:993, smtp_tls:'starttls', imap_ssl:true},
+  ses:     {smtp_host:'email-smtp.us-east-1.amazonaws.com', smtp_port:587, imap_host:'', imap_port:993, smtp_tls:'starttls', imap_ssl:true},
+};
+$$('.preset').forEach(p => p.addEventListener('click', () => { applyPreset(p.dataset.preset); }));
+async function applyPreset(p){
+  const v = PRESETS[p];
+  for(const [k,val] of Object.entries(v)) if(val){
+    const inp = document.querySelector(`[data-key="agent.${k}"]`); if(inp){ inp.value = val; inp.dispatchEvent(new Event('input')); }
+  }
+}
+
+function showSaved(){
+  const b = $('#saveBadge'); b.classList.remove('hidden');
+  clearTimeout(showSaved._t); showSaved._t = setTimeout(() => b.classList.add('hidden'), 1500);
+}
+</script>
+</body>
+</html>

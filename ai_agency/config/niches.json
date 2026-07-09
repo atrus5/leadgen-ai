@@ -1,0 +1,488 @@
+{
+  "version": 2,
+  "subject_convention": "Array of 3 subject templates per niche. Index 0 = curiosity, 1 = value-prop, 2 = soft-urgency. Renderer picks one uniformly at random. Use {businessName} / {city} placeholders.",
+  "niches": [
+    {
+      "key": "Roofing",
+      "icon": "🏠",
+      "lifetime_value": "$5K–15K per customer",
+      "audience": "homeowners who've weathered storms OR aging roofs",
+      "primary_pain": "storm seasons drive emergency demand but no-shows eat margins; phone tag with insurance adjusters",
+      "tone": "practical, neighborly, low-pressure",
+      "vocabulary": ["roof", "shingle", "gutter", "flashing", "storm", "wind damage", "hail", "insurance claim", "warranty", "free inspection"],
+      "taboo_words": ["synergy", "deliverables", "transform", "leverage"],
+      "subject_templates": [
+        "{businessName} — quick sanity check on storm-season intake?",
+        "Built a 60-sec roof checklist for {businessName} in {city}",
+        "Next hail window in {city} — {businessName} ready for the surge?"
+      ],
+      "opener_hooks": [
+        "{firstName}, quick one — last week's storm rolled through {city} and {businessName} ended up on the top of a half-dozen 'do I need a new roof?' searches this morning. I've got a 60-second checklist your office can text to homeowners before they call the insurance adjuster — works for hail OR wind. Worth a 5-minute look?",
+        "Saw {businessName} is still answering the phone after-hours by hand; my hunch is you can replace up to 70% of that with one good follow-up text. Mapped it out for a roofer in {city} last quarter. Want me to send the script?"
+      ],
+      "followup_pain": "payment-on-completion means cash-flow gap, deposits are awkward to ask for",
+      "followup_hook": "When the next storm cell pops in {city}, you'll want 3 jobs pre-sold, not 3 callbacks unanswered."
+    },
+    {
+      "key": "Real Estate",
+      "icon": "🏡",
+      "lifetime_value": "$5K–20K per deal",
+      "audience": "individual agents / small teams",
+      "primary_pain": "leads from Zillow/Redfin are auctioned to 3 other agents simultaneously; seller pipelines are dry",
+      "tone": "warm, agent-to-agent, professional",
+      "vocabulary": ["listing", "buyer", "seller", "commission", "lead", "open house", "MLS", "closing", "escrow"],
+      "taboo_words": ["disrupt", "scale exponentially"],
+      "subject_templates": [
+        "{businessName} — past-circle leads worth reviving?",
+        "4-touch sequence pulling 38% of cold leads back for {city} agents",
+        "Spring inventory is open — {businessName} ready?"
+      ],
+      "opener_hooks": [
+        "{firstName}, the listing inventory in {city} finally thawed. Most agents I work with say their #1 leak is past-circle leads going cold by 11pm the same day. Built a 4-touch text sequence that revives ~38% of them. Send it over?",
+        "If {businessName}'s pipeline looks anything like most teams in {city}, you've got 60+ contacts in your CRM who raised their hand two springs ago. Easy $20K if we reheat 10 of them — want the playbook?"
+      ],
+      "followup_pain": "speed-to-lead > 5 minutes means 10x lower conversion",
+      "followup_hook": "What's your current average response time to a new Zillow ping — under 5 minutes or over an hour?"
+    },
+    {
+      "key": "Dental",
+      "icon": "🦷",
+      "lifetime_value": "$3K–10K per patient over 5 years",
+      "audience": "private practices, 1–3 doctors",
+      "primary_pain": "no-shows that ghost the morning of, hygiene recare < 30%, insurance write-offs",
+      "tone": "clinical-but-warm, never sells",
+      "vocabulary": ["hygiene", "recare", "crown", "implants", "insurance", "PPO", "patient", "smile", "new patient", "open hours"],
+      "taboo_words": ["rockstar", "guru", "crush it"],
+      "subject_templates": [
+        "{businessName} — recare texts have a quiet leak",
+        "$80K/year stays in your chair if {businessName}'s no-show list shrinks",
+        "Hygiene recare window — {businessName} scrubbing the 6-month list?"
+      ],
+      "opener_hooks": [
+        "{firstName}, the average {city} dental practice loses ~$80K/year to no-shows that nobody calls back until they fall off the books. {businessName} doesn't need a marketing agency — you need one person running recare text sequences. I've got the exact copy + cadence. Look?"
+      ],
+      "followup_pain": "doctor fatigue from denture / surgical sales conversations",
+      "followup_hook": "Not asking you to take more calls — asking you to take better ones."
+    },
+    {
+      "key": "HVAC",
+      "icon": "❄️",
+      "lifetime_value": "$3K–8K per install, recurring maintenance plans",
+      "audience": "residential + light-commercial HVAC contractors",
+      "primary_pain": "summer/winter peaks mean missed calls = lost installs, dispatcher overwhelmed",
+      "tone": "no-BS, technical-credible",
+      "vocabulary": ["AC unit", "furnace", "compressor", "SEER rating", "tune-up", "service contract", "emergency service", "indoor air quality"],
+      "taboo_words": ["storytelling", "brand voice"],
+      "subject_templates": [
+        "{businessName} — what's actually happening to the 6pm call?",
+        "$8K/week in {city} HVAC dispatch leaks back to the operator",
+        "First 95° day is closer than {businessName} thinks"
+      ],
+      "opener_hooks": [
+        "{firstName}, when {city} hits 95° your dispatcher becomes a triage nurse. {businessName} is probably turning $8K of work away a week on a missed second call. Built a 3-step intake flow that triages 70% without the call ringing. Worth 5 minutes?"
+      ],
+      "followup_pain": "summer/fall seasonality = feast or famine cashflow",
+      "followup_hook": "What's your average callback miss rate during the heat dome last summer — 20%, 40%, more?"
+    },
+    {
+      "key": "Legal",
+      "icon": "⚖️",
+      "lifetime_value": "$5K–50K per case",
+      "audience": "small law firms, solo practitioners, plaintiff/probate/immigration specialists",
+      "primary_pain": "intake calls happen after 6pm, intake staff burns out, retainer-card abandonment",
+      "tone": "very professional, conservative, confidential",
+      "vocabulary": ["intake", "retainer", "consultation", "case", "claim", "deposition", "client", "counsel"],
+      "taboo_words": ["marketing hacks", "trick"],
+      "subject_templates": [
+        "{businessName} — intake form losing consults before the phone rings?",
+        "Bar-compliant intake re-order for {city} firms (small change)",
+        "Day-end consult missed calls — {businessName} seeing them?"
+      ],
+      "opener_hooks": [
+        "{firstName}, saw {businessName}'s intake form on your site — it asks for the case detail before asking one qualifying question. That's likely where your firm loses ~35% of consults before the call rings. Mapped the swap for a 4-attorney PI firm in {city}. Quick look?"
+      ],
+      "followup_pain": "bar-ad rules on solicitation — every email needs careful wording",
+      "followup_hook": "All copy is bar-compliant — neutral, informational, no guarantees."
+    },
+    {
+      "key": "Mortgage",
+      "icon": "🏦",
+      "lifetime_value": "$3K–10K per closed loan",
+      "audience": "loan officers, mortgage brokers",
+      "primary_pain": "purchase market has cratered, refi window closed, realtors ghosting",
+      "tone": "professional, partnership-seeking",
+      "vocabulary": ["rate", "lock", "purchase", "refi", "FICO", "pre-approval", "title", "underwriter", "closer", "loan officer"],
+      "taboo_words": ["disrupt"],
+      "subject_templates": [
+        "{businessName} — when rates move, do your realtors hear from you?",
+        "1-page co-marketing kit (TRID-safe) for {businessName}'s top realtors",
+        "Realtor partners in {city} — {businessName} on their text-update list?"
+      ],
+      "opener_hooks": [
+        "{firstName}, when rates move 25bps, your realtor partners get three texts and zero plan. {businessName}'s likely getting left off those texts now. Built a one-page co-marketing kit (compliance-approved) that loan officers in {city} send to their top 20 realtors. Have 5 min?"
+      ],
+      "followup_pain": "TRID + state compliance rules are tight — generic copy fails",
+      "followup_hook": "Every line has a compliance-review marker; I work with TRID-safe phrasing."
+    },
+    {
+      "key": "Insurance",
+      "icon": "🛡️",
+      "lifetime_value": "$1.5K–6K per household annually",
+      "audience": "P&C agencies, life & health brokers",
+      "primary_pain": "renewals quietly lapse, cross-sell is awkward, agents reluctant to call",
+      "tone": "consultative, never pushy",
+      "vocabulary": ["policy", "renewal", "umbrella", "riders", "deductible", "carrier", "agent", "broker"],
+      "taboo_words": ["upsell", "guarantee"],
+      "subject_templates": [
+        "{businessName} — what's the renewal cadence on the 20% expiring soon?",
+        "Re-quote sequence for carriers {businessName} writes",
+        "Annual review window — {businessName} clearing it?"
+      ],
+      "opener_hooks": [
+        "{firstName}, in {city} my hunch is 20% of {businessName}'s book is up for renewal in the next 60 days and you're calling them cold with a renewal reminder. Mapped a 4-touch sequence that turns 41% of cold renewals into a re-quote conversation. Send it over?"
+      ],
+      "followup_pain": "compliance carrier rules vary — language must be carrier-approved",
+      "followup_hook": "I only use language approved by State Farm, Allstate, Progressive, etc."
+    },
+    {
+      "key": "Fitness",
+      "icon": "💪",
+      "lifetime_value": "$1K–5K per member, $200-300/mo recurring",
+      "audience": "boutique studios, CrossFit boxes, personal trainer studios",
+      "primary_pain": "January member bands, March drop-off, intro offers eat margin",
+      "tone": "energetic, results-focused, no-fluff",
+      "vocabulary": ["member", "class pack", "intro", "assessment", "coach", "PR", "transformation", "habit"],
+      "taboo_words": ["journey", "wellness ecosystem"],
+      "subject_templates": [
+        "{businessName} — the January leavers still have a phone number",
+        "3-word text recovering 15% of intro-offer no-shows",
+        "March drop-off window — {businessName} pre-loading?"
+      ],
+      "opener_hooks": [
+        "{firstName}, {businessName}'s probably sitting on 200 leads from January who took the intro offer and never came back. With {city}'s weather warming up, 15% of them re-buy if you text the right 3-words. Built the exact copy — want it?"
+      ],
+      "followup_pain": "high churn, retention is the only path to profitability",
+      "followup_hook": "Your hardest customers are the ones who went silent — they have a reason."
+    },
+    {
+      "key": "Plumbing",
+      "icon": "🔧",
+      "lifetime_value": "$2K–8K per job",
+      "audience": "residential plumbers, 1–3 truck shops, occasional commercial",
+      "primary_pain": "after-hours calls missed, water-heater emergencies cannibalize crew time",
+      "tone": "neighborly, plain-spoken, trustworthy",
+      "vocabulary": ["water heater", "tankless", "drain", "leak", "burst", "sewer line", "repipe", "garbage disposal", "flooded basement"],
+      "taboo_words": ["transformative", "paradigm"],
+      "subject_templates": [
+        "{businessName} — who picks up the 8am Sunday call?",
+        "After-hours text agent for 1-truck shops like {businessName}",
+        "Water-heater season opens in {city} — {businessName} ready?"
+      ],
+      "opener_hooks": [
+        "{firstName}, half the calls {businessName} is missing in {city} are on Sunday at 8am when nobody picks up. Companies like yours typically recover 60% of those with a single after-hours text agent. Built the exact script. Worth a quick look?"
+      ],
+      "followup_pain": "truck-roll economics — every missed dispatch is lost margin",
+      "followup_hook": "Water heater replacements this fall — what's your top-of-mind bottleneck now?"
+    },
+    {
+      "key": "Duct Cleaning",
+      "icon": "💨",
+      "lifetime_value": "$500–2K per home",
+      "audience": "single-truck operators, often cross-marketing with HVAC",
+      "primary_pain": "highly seasonal (spring/fall), education-heavy premium service",
+      "tone": "informative, allergen-aware",
+      "vocabulary": ["duct", "mold", "allergies", "filter", "return air", "register", "IAQ", "sanitizing"],
+      "taboo_words": ["synergy"],
+      "subject_templates": [
+        "{businessName} — the 90-second IAQ test on every doorstep?",
+        "Allergy-season closing rate doubles with one add-on — {businessName}?",
+        "Spring duct surge 6 weeks away — {businessName} already filling?"
+      ],
+      "opener_hooks": [
+        "{firstName}, in {city} the average family has 6x more dust in their ductwork than meets FDA clean-air thresholds. {businessName} could double close-rate by adding a 90-second indoor-air test to the doorstep consult. Have the script — want it?"
+      ],
+      "followup_pain": "low-frequency service means customer list goes cold fast",
+      "followup_hook": "Last winter — did you snag any furnace + duct bundling?"
+    },
+    {
+      "key": "Gutters",
+      "icon": "🏚️",
+      "lifetime_value": "$500–3K per job",
+      "audience": "small exterior contractors, often bundled with roofing",
+      "primary_pain": "dependent on weather events, hard to forecast pipeline",
+      "tone": "direct, practical",
+      "vocabulary": ["seamless", "downspouts", "guards", "fascia", "ice dam", "fall clean", "soffit"],
+      "taboo_words": ["thought leader"],
+      "subject_templates": [
+        "{businessName} — standalone gutter jobs vs. roofing overflow?",
+        "Fall-clean 3-message sequence pulled $18K last October — {businessName}?",
+        "First leaves dropping in {city} — {businessName} inbound ready?"
+      ],
+      "opener_hooks": [
+        "{firstName}, if {businessName} handles gutter calls as overflow from roofing work, you're leaving 30% of revenue on the table. Mapped a 3-message fall-clean sequence that pulled $18K of standalone jobs for a 2-truck outfit in {city} last fall. Want the script?"
+      ],
+      "followup_pain": "fall rush crushes ops, missed leads bin",
+      "followup_hook": "How many fall-clean jobs landed in October alone?"
+    },
+    {
+      "key": "Snow Removal",
+      "icon": "❄️",
+      "lifetime_value": "$1K–5K per season per property",
+      "audience": "commercial snow contractors, residential driveway services",
+      "primary_pain": "seasonal contracts signed too late, route mapping chaos, late-night dispatch",
+      "tone": "dependable, fast, contract-ready",
+      "vocabulary": ["plowing", "salt", "lot", "commercial", "season contract", "per-push", "driveway"],
+      "taboo_words": ["growth hacking"],
+      "subject_templates": [
+        "{businessName} — when do commercial contracts lock in {city}?",
+        "4-touch August sequence that pulled 22 contracts last winter",
+        "Property managers in {city} decide in September — {businessName} on the list?"
+      ],
+      "opener_hooks": [
+        "{firstName}, commercial property managers in {city} start locking snow contracts in early September. {businessName} probably loses 40% of them to whoever emailed first. Mapped a 4-touch August sequence that's pulled 22 contracts at $4K each. Look?"
+      ],
+      "followup_pain": "cashflow bimodal — heavy winter, dead summer",
+      "followup_hook": "What's the busiest month for renewal calls — October, November, December?"
+    },
+    {
+      "key": "Grass & Lawn",
+      "icon": "🌿",
+      "lifetime_value": "$1K–4K per season recurring",
+      "audience": "lawn-care operators, residential+light-commercial",
+      "primary_pain": "route density, weather cancels, upsells to fertilization ignored",
+      "tone": "easygoing, seasonal",
+      "vocabulary": ["mowing", "aeration", "overseeding", "fertilization", "weed control", "weekly", "biweekly"],
+      "taboo_words": ["disrupt"],
+      "subject_templates": [
+        "{businessName} — when {city} homeowners budget their lawn spend?",
+        "2-touch email lands 4× the close-rate vs. last year — {businessName}?",
+        "Biweekly route opens this week — {businessName} filling them?"
+      ],
+      "opener_hooks": [
+        "{firstName}, this is the week {city} homeowners start mentally budget their lawn spend. {businessName} has a 6-week window where a 2-touch email lands four-times the close-rate vs. last year. Built it. Worth 5 min?"
+      ],
+      "followup_pain": "cancellation spikes mid-summer during heat waves",
+      "followup_hook": "Best summer retention trick you've tried — discount, pause, something else?"
+    },
+    {
+      "key": "Tree Service",
+      "icon": "🌳",
+      "lifetime_value": "$1K–10K per job, high-ticket emergencies",
+      "audience": "tree removal / arborists",
+      "primary_pain": "emergency calls outpace scheduled pruning, insurance paperwork lost",
+      "tone": "plain-spoken, safety-first",
+      "vocabulary": ["removal", "trimming", "stump grinding", "storm damage", "arborist", "permits"],
+      "taboo_words": ["narrative"],
+      "subject_templates": [
+        "{businessName} — own post-storm tree searches in {city}?",
+        "30-second intake form wins the 6-hour window — {businessName}?",
+        "Storm season opens — {businessName}'s on the radar?"
+      ],
+      "opener_hooks": [
+        "{firstName}, post-storm tree work in {city} shows up on Google 6 hours before the homeowner calls. {businessName} can own those searches with a 30-second intake form. Mapped the exact intake. Look?"
+      ],
+      "followup_pain": "equipment + insurance claims — paperwork eats weekends",
+      "followup_hook": "What's your current weekend admin ratio — 10%, 30%?"
+    },
+    {
+      "key": "Care Aid",
+      "icon": "🧓",
+      "lifetime_value": "$2K–6K per client/mo",
+      "audience": "in-home care agencies, senior care placement",
+      "primary_pain": "families need help fast — slow intake loses placements, regulator paperwork slow",
+      "tone": "warm, family-first, sensitive",
+      "vocabulary": ["caregiver", "in-home", "respite", "ADL", "placement", "memory care", "medication", "family"],
+      "taboo_words": ["hustle", "grind"],
+      "subject_templates": [
+        "{businessName} — same-hour callback for crisis-mode families?",
+        "Crisis-intake sequence for in-home agencies in {city}",
+        "Family decision window — {businessName} answering after 6pm?"
+      ],
+      "opener_hooks": [
+        "{firstName}, the average {city} family who reaches out for in-home care is in crisis — they've called 2 agencies and gotten voicemail. {businessName} can offer a same-hour callback that lands 60% of them. Built the script. Want a look?"
+      ],
+      "followup_pain": "burnout — caregiver turnover is brutal on quality",
+      "followup_hook": "How's your current caregiver-month-to-month retention — over or under 70%?"
+    },
+    {
+      "key": "Mechanic",
+      "icon": "🔩",
+      "lifetime_value": "$500–5K per repair",
+      "audience": "independent auto shops, dealer-adjacent",
+      "primary_pain": "diagnostic disputes, parts delays, warranty pushback",
+      "tone": "honest, diagnostic-first",
+      "vocabulary": ["diagnostic", "estimate", "OEM", "warranty", "transmission", "brakes", "transmission fluid"],
+      "taboo_words": ["delight customers"],
+      "subject_templates": [
+        "{businessName} — second-opinion texts before or after?",
+        "Trust-sequence for high-ticket estimates at {businessName}",
+        "Estimate-week opens — {businessName}'s intake feels how?"
+      ],
+      "opener_hooks": [
+        "{firstName}, the moment a {city} customer gets a $1.2K estimate, they text three friends for a 'second opinion.' {businessName} could pre-empt that with a 2-message trust sequence before they walk in. Mapped it. Worth a quick look?"
+      ],
+      "followup_pain": "shop capacity — diagnostics are the bottleneck",
+      "followup_hook": "How many estimates do you write a week that don't come back for the job?"
+    },
+    {
+      "key": "Cleaning Service",
+      "icon": "🧹",
+      "lifetime_value": "$200–800/mo recurring per home",
+      "audience": "residential cleaning, recurring weekly/biweekly",
+      "primary_pain": "one-time cleans don't convert, crew churn, low-margin scheduling",
+      "tone": "approachable, low-pressure",
+      "vocabulary": ["deep clean", "recurring", "weekly", "move-out", "eco-friendly", "supplies included"],
+      "taboo_words": ["rockstar cleaners"],
+      "subject_templates": [
+        "{businessName} — first-recurring-clean conversion in {city}",
+        "Post-quote 2-message that converts 6/week — {businessName}?",
+        "Spring deep-clean window — {businessName} filling?"
+      ],
+      "opener_hooks": [
+        "{firstName}, the {city} homeowner database I'm seeing — 1 in 7 is hiring their first recurring cleaner this spring. {businessName} could land 6 of those/week with a 2-message post-quote sequence. Built it. Want it?"
+      ],
+      "followup_pain": "cancellation stings — every lost weekly is 2 months revenue gone",
+      "followup_hook": "If a recurring client pauses — do you ever re-engage them with a 'we missed you' text?"
+    },
+    {
+      "key": "Pest Control",
+      "icon": "🐛",
+      "lifetime_value": "$500–2K/yr recurring",
+      "audience": "general pest / termite / rodent specialists",
+      "primary_pain": "Q2-Q3 surge, recurring revenue invisible to homeowners",
+      "tone": "knowledgeable, calm",
+      "vocabulary": ["termite", "rodent", "ant", "wasp", "quarterly", "treatment", "barrier", "IPM"],
+      "taboo_words": ["transformative"],
+      "subject_templates": [
+        "{businessName} — pre-season termite swarms 4 weeks out",
+        "8%-of-ZIP-code capture for {businessName}'s spring pre-season",
+        "Recurring-renewal window — {businessName} reminding?"
+      ],
+      "opener_hooks": [
+        "{firstName}, {city} termite swarms in 4 weeks and most homeowners don't realize until carpenter ants show up. {businessName} can run a 2-touch pre-season sequence that lands 8% of the ZIP code. Have the copy. Look?"
+      ],
+      "followup_pain": "service is invisible — customer forgets they have you",
+      "followup_hook": "What's your average annual contract value — closer to $500 or $1,200?"
+    },
+    {
+      "key": "Pool Service",
+      "icon": "🏊",
+      "lifetime_value": "$1K–3K/mo or $5K–12K/yr recurring",
+      "audience": "pool maintenance, opening/closing specialists",
+      "primary_pain": "off-season silence, equipment-failure premium pricing awkward",
+      "tone": "weekend-pool-dad friendly, technical-credible",
+      "vocabulary": ["weekly", "opening", "closing", "saltwater", "heater", "pump", "liner"],
+      "taboo_words": ["disrupt"],
+      "subject_templates": [
+        "{businessName} — pools-in-{city} panic-Googling this week?",
+        "March-open sequence pulled 3-5 jobs/week — {businessName}?",
+        "Pre-season contracts open — {businessName} on the route sheet?"
+      ],
+      "opener_hooks": [
+        "{firstName}, in {city} pools open in 5–6 weeks. Most homeowners start panic-Googling when their water turns green. {businessName} can land 3–5 of those/week with a March-open sequence. Have the copy. Look?"
+      ],
+      "followup_pain": "pump/filter upsells feel pushy, missed recurring renewals",
+      "followup_hook": "Best upsell-to-service-ratio — feels high enough?"
+    },
+    {
+      "key": "Painting",
+      "icon": "🎨",
+      "lifetime_value": "$2K–15K per project",
+      "audience": "interior + exterior painting contractors",
+      "primary_pain": "estimates weak, color-selection conversations long, project manager burned out",
+      "tone": "professional, design-aware",
+      "vocabulary": ["interior", "exterior", "primer", "cabinet refinishing", "drywall repair", "estimate"],
+      "taboo_words": ["storytelling"],
+      "subject_templates": [
+        "{businessName} — why 38% of written estimates never decide?",
+        "2-message follow-up that flips estimates — {businessName}?",
+        "Estimate pipeline week — {businessName}'s follow-up looks how?"
+      ],
+      "opener_hooks": [
+        "{firstName}, the top {city} painters I talk to all share one stat — 38% of their written estimates never decide. {businessName} can flip that with a 2-message follow-up sequence. Mapped the exact cadence. Look?"
+      ],
+      "followup_pain": "scheduling bursty, job gaps hurt cashflow",
+      "followup_hook": "Last week — how many estimates did you send out, how many decisions did you get?"
+    },
+    {
+      "key": "Pressure Washing",
+      "icon": "💦",
+      "lifetime_value": "$300–2K per job",
+      "audience": "residential and light-commercial",
+      "primary_pain": "highly seasonal, customer never returns after one job",
+      "tone": "casual, demo-style",
+      "vocabulary": ["driveway", "deck", "siding", "soft wash", "commercial", "before and after"],
+      "taboo_words": ["rockstar"],
+      "subject_templates": [
+        "{businessName} — 90-day-later re-engagement copy ready",
+        "Annual-care sequence lands 30+ returning jobs/year",
+        "Heavy-season opens — {businessName}'s route full?"
+      ],
+      "opener_hooks": [
+        "{firstName}, after one driveway wash the customer forgets you exist. {businessName} can re-engage 90 days later with a 2-message annual-care sequence. Built it. Want it?"
+      ],
+      "followup_pain": "single-tour service — no recurring model",
+      "followup_hook": "How many returning customers in a typical year — 1 in 5, fewer?"
+    },
+    {
+      "key": "Electrician",
+      "icon": "⚡",
+      "lifetime_value": "$1K–10K per job",
+      "audience": "residential electricians, light-commercial",
+      "primary_pain": "permit/inspection scheduling, emergency pricing awkwardness",
+      "tone": "matter-of-fact, safety-first",
+      "vocabulary": ["panel upgrade", "EV charger", "rewire", "generator", "permit", "inspection"],
+      "taboo_words": ["conversation starter"],
+      "subject_templates": [
+        "{businessName} — own the '{city} electrician near me' Google post?",
+        "1-message welcome lands 4 calls/week — {businessName}?",
+        "Panel-upgrade quote week opens — {businessName}?"
+      ],
+      "opener_hooks": [
+        "{firstName}, every month {city} homeowners search 'electrician near me' 800+ times. {businessName} could capture 4 of them/week with a single post on Google Business + a 1-message welcome. Mapped it. Look?"
+      ],
+      "followup_pain": "panel-upgrade sales lost to bundling hesitation",
+      "followup_hook": "How many panel-upgrade quotes did you write last month — 5, 15, more?"
+    },
+    {
+      "key": "Chiropractic",
+      "icon": "💆",
+      "lifetime_value": "$1.5K–4K per patient annually",
+      "audience": "independent chiropractors, sports-focused, family",
+      "primary_pain": "post-care plan abandonment, reactivations ignored",
+      "tone": "wellness-informed, never preachy",
+      "vocabulary": ["adjustment", "care plan", "reactivation", "posture", "wellness", "athletic recovery"],
+      "taboo_words": ["crucial", "wellness journey"],
+      "subject_templates": [
+        "{businessName} — who's reactivating from your post-care-plan list?",
+        "3-touch reactivation that pulls 22% back — {businessName}?",
+        "February reactivation window — {businessName}'s list warming?"
+      ],
+      "opener_hooks": [
+        "{firstName}, I see this pattern in {city} every month — patients who finished their care plan in October don't return in February. {businessName} could land 22% of them back with a 3-touch re-engagement sequence. Built it. Look?"
+      ],
+      "followup_pain": "wellness-care positioning vs. acute-care reality",
+      "followup_hook": "What's your reactivations-per-month ratio — 5%, 10%, higher?"
+    },
+    {
+      "key": "Retail",
+      "icon": "🛍️",
+      "lifetime_value": "$200–2K per customer per year",
+      "audience": "independent retail shops, e-commerce hybrid",
+      "primary_pain": "post-visit customers don't return, gift-list conversion weak",
+      "tone": "warm, brand-friendly",
+      "vocabulary": ["shop", "collection", "in-store", "gift", "loyalty", "VIP", "newsletter"],
+      "taboo_words": ["synergy", "disrupt"],
+      "subject_templates": [
+        "{businessName} — 1,500 quiet subscribers worth reviving?",
+        "3-touch 'we miss you' pulled 14% back — {businessName}?",
+        "Loyalty window — {businessName} reaching the quiet 80%?"
+      ],
+      "opener_hooks": [
+        "{firstName}, {businessName} probably has 1,500+ email subscribers who've bought once and gone quiet. {city} retail outfits are recovering 14% of those with a single 'we miss you' 3-touch sequence. Have it. Look?"
+      ],
+      "followup_pain": "foot traffic migrated online, repeat visits hard to manufacture",
+      "followup_hook": "What's your typical first-purchase-to-second-purchase lag — 30 days, 90 days, more?"
+    }
+  ]
+}

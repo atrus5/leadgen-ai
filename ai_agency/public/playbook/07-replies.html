@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>07 · Reply handling · LeadGen AI Playbook</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}article p{line-height:1.7}article h2{font-size:1.25rem;font-weight:700;margin-top:1.5rem;margin-bottom:.5rem}article li{margin-bottom:.4rem}code{background:#0b1220;color:#a7f3d0;padding:1px 5px;border-radius:4px}</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="max-w-3xl mx-auto px-6 py-10">
+  <a href="/playbook/" class="text-sm text-sky-400 hover:text-sky-300">← Back to playbook</a>
+  <h1 class="text-3xl font-extrabold mt-3 mb-2">Stage 07 · Reply handling</h1>
+  <p class="text-sm text-slate-500 font-mono mb-8">Inbound replies are auto-classified and HOT ones get forwarded to the paying client.</p>
+
+  <article class="space-y-4 text-slate-200">
+
+    <h2>The reply poller</h2>
+    <p>Every 15 minutes the scheduler runs <code>outreach/reply_parser.py</code>:</p>
+    <ol class="list-decimal pl-6 text-slate-300">
+      <li>Open an IMAP_SSL connection to your mailbox.</li>
+      <li>Fetch up to 25 UNSEEN messages.</li>
+      <li>Decode headers + bodies (text/plain preferred, falls back to text/html stripped of tags).</li>
+      <li>Match each sender's email to a prospect in our <code>prospects</code> table.</li>
+      <li>Classify intent via Llama 3 if running, else deterministic keyword fallback.</li>
+      <li>Persist to <code>replies</code> table.</li>
+    </ol>
+
+    <h2>The seven labels</h2>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li><strong>HOT</strong> — clear interest, wants a call/quote/meeting. Auto-forwarded.</li>
+      <li><strong>MORE_INFO</strong> — wants details but not yet ready to buy. Auto-forwarded.</li>
+      <li><strong>NOT_NOW</strong> — polite deferral. Stays in the queue.</li>
+      <li><strong>OUT_OF_OFFICE</strong> — auto reply. Ignored.</li>
+      <li><strong>UNSUBSCRIBE</strong> — angry / stop. Add to blacklist, never email again.</li>
+      <li><strong>NOISE</strong> — unrelated. Stays in the queue.</li>
+    </ul>
+
+    <h2>The forwarder</h2>
+    <p>When the label is HOT or MORE_INFO, <code>outreach/forwarder.py</code>:</p>
+    <ol class="list-decimal pl-6 text-slate-300">
+      <li>Looks up the prospect + paying client from the database.</li>
+      <li>Composes a brief: business name, contact, email, phone, website, niche, original reply.</li>
+      <li>Sends via SMTP using the same credentials as outbound.</li>
+      <li>Marks <code>replies.forwarded = 1</code> so it never re-sends.</li>
+    </ol>
+
+    <h2>The forward body</h2>
+    <pre class="bg-slate-900 rounded-xl p-4 text-xs overflow-x-auto">Hi Mike,
+
+A prospect of yours (Sunrise Plumbing, Austin) just raised their hand
+and asked for more information. The full transcript is below.
+
+— LEAD BRIEF —
+Business:  Sunrise Plumbing
+Contact:   John Davis  (Owner)
+Email:     john@sunriseplumbing.com
+Phone:     (555) 123-4567
+Website:   sunriseplumbing.com
+Niche:     Plumbing
+
+— ORIGINAL REPLY —
+Subject: Re: 5-min read?
+Received: 2025-01-23T15:22:10+00:00
+
+Yes — please send more info. We're losing 30% of after-hours calls
+and would love to see your intake flow.
+
+— LeadGen AI</pre>
+
+    <h2>Caution: don't leak your list</h2>
+    <p>The forward message only contains the <em>one</em> prospect whose reply was HOT. The rest of the campaign and the other prospects stay out of the forwarded email. The agency operator should never be in a position to receive more than what comes from a single reply.</p>
+
+    <h2>Manual reply check</h2>
+    <pre class="bg-slate-900 rounded-xl p-4 text-xs overflow-x-auto">curl -X POST http://your-host/api/jobs/run \
+  -H "Content-Type: application/json" \
+  -d '{"name":"reply_poller"}'</pre>
+
+  </article>
+
+  <p class="text-sm mt-12"><a href="/playbook/06-outreach.html" class="text-sky-400 hover:text-sky-300">← Previous</a> · <a href="/playbook/08-recipes.html" class="text-sky-400 hover:text-sky-300">Next: 08 · Recipes →</a></p>
+</div>
+</body>
+</html>

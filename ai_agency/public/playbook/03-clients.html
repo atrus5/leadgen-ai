@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>03 · Onboard your first client · LeadGen AI Playbook</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}article p{line-height:1.7}article h2{font-size:1.25rem;font-weight:700;margin-top:1.5rem;margin-bottom:.5rem}article li{margin-bottom:.4rem}pre{background:#0b1220;color:#a7f3d0;border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:ui-monospace,"JetBrains Mono",Menlo,monospace;font-size:13px}code{background:#0b1220;color:#a7f3d0;padding:1px 5px;border-radius:4px}</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="max-w-3xl mx-auto px-6 py-10">
+  <a href="/playbook/" class="text-sm text-sky-400 hover:text-sky-300">← Back to playbook</a>
+  <h1 class="text-3xl font-extrabold mt-3 mb-2">Stage 03 · Onboard your first client</h1>
+  <p class="text-sm text-slate-500 font-mono mb-8">A client here is the business you're running leads for — the paying customer.</p>
+
+  <article class="space-y-4 text-slate-200">
+
+    <h2>Before they sign</h2>
+    <ol class="list-decimal pl-6 text-slate-300">
+      <li>Have the <a class="text-sky-400" href="/playbook/01-domain.html">domain + warmup</a> running — never promise day-of deliverables.</li>
+      <li>Read <a class="text-sky-400" href="/docs/MASTER_SALES_DOC.txt">MASTER_SALES_DOC.txt</a> for the agency contract template.</li>
+      <li>Decide the billing metric. Industry default: $150 per HOT lead forwarded.</li>
+    </ol>
+
+    <h2>Add the client in the database</h2>
+    <p>Use <code>POST /api/clients</code> from the wizard, or via <code>curl</code>:</p>
+    <pre>curl -X POST http://your-host/api/clients \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Johnson Roofing LLC",
+    "niche": "Roofing",
+    "city": "Austin",
+    "region": "TX",
+    "contact_name": "Mike Johnson",
+    "contact_email": "mike@johnsonroofing.com",
+    "retainer_cents": 250000,
+    "start_date": "2025-01-15",
+    "notes": "Storm-damage season focus; wants 40 leads per month",
+    "days_per_week_target": 5
+  }'</pre>
+
+    <h2>Field explanations</h2>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li><strong>niche</strong> — must match one of the 24 in <code>config/niches.json</code>. The opener hooks differ per niche.</li>
+      <li><strong>city / region / country</strong> — the hunters filter on these. Be exact.</li>
+      <li><strong>contact_email</strong> — where the app forwards HOT leads. Use a personal mailbox, not info@.</li>
+      <li><strong>retainer_cents</strong> — 250000 = $2500.00. Stored as cents to avoid float drift.</li>
+      <li><strong>days_per_week_target</strong> — soft hint; the scheduler derives quotas from this.</li>
+    </ul>
+
+    <h2>Create a test client first</h2>
+    <p>Don't point the system at a paying client until you've done a dry-run:</p>
+    <ol class="list-decimal pl-6 text-slate-300">
+      <li>Create a client called "Test Client."</li>
+      <li>Trigger a hunt via <code>POST /api/hunt</code> with that client's id.</li>
+      <li>Verify prospects show up in <code>GET /api/clients/&lt;id&gt;/prospects</code>.</li>
+      <li>Send cold email to yourself only.</li>
+      <li>Reply to that email. Within 15 minutes the reply poller should pick it up and mark it HOT.</li>
+      <li>Confirm the forward email arrives at your personal mailbox.</li>
+    </ol>
+
+    <h2>Now add the real one</h2>
+    <p>Once the dry-run works, deactivate the test client and create the paying one.</p>
+
+  </article>
+
+  <p class="text-sm mt-12"><a href="/playbook/02-warmup.html" class="text-sky-400 hover:text-sky-300">← Previous</a> · <a href="/playbook/04-hunt-nightly.html" class="text-sky-400 hover:text-sky-300">Next: 04 · The nightly hunt →</a></p>
+</div>
+</body>
+</html>
