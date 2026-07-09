@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>01 · Pick and buy a domain · LeadGen AI Playbook</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  article p { line-height: 1.7; }
+  code { background:#0b1220; color:#a7f3d0; padding:1px 5px; border-radius:4px; }
+  article h2 { font-size:1.25rem; font-weight:700; margin-top:1.5rem; margin-bottom:.5rem; }
+  article li { margin-bottom:.4rem; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="max-w-3xl mx-auto px-6 py-10">
+  <a href="/playbook/" class="text-sm text-sky-400 hover:text-sky-300">← Back to playbook</a>
+  <h1 class="text-3xl font-extrabold mt-3 mb-2">Stage 01 · Pick and buy a domain</h1>
+  <p class="text-sm text-slate-500 font-mono mb-8">Estimated time: 15 minutes · Cost: $9–14/year</p>
+
+  <article class="space-y-4 text-slate-200">
+
+    <h2>Why this matters</h2>
+    <p>Cold-email deliverability is mostly decided in the first 30 days after you buy a domain. Two things make or break inbox placement:</p>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li>Whether your domain and From address <em>sound like a real business</em>.</li>
+      <li>Whether you've set SPF, DKIM, and DMARC <em>before</em> sending your first mass email.</li>
+    </ul>
+
+    <h2>Pick a name</h2>
+    <p>The domain becomes your outbound From identity. Recipients see it in <code>From: hello@your-domain.com</code> on every cold email. The wrong name will look like spam even before you send anything.</p>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li><strong>Good:</strong> short, pronounces like a real business, no hyphens, no "best-cheap-" prefixes. <code>getacmeoutreach.com</code>, <code>tryacme.com</code>, <code>acmereach.com</code>.</li>
+      <li><strong>Avoid:</strong> brand-new TLDs (<code>.xyz</code>, <code>.click</code>, <code>.top</code>), hyphenated names, anything with numbers.</li>
+      <li>If you sell AI lead-gen, the name doesn't need to say "AI". <code>acmereach.com</code> is more credible than <code>acme-ai-agency.io</code>.</li>
+    </ul>
+
+    <h2>Where to buy</h2>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li><strong>Namecheap</strong> — easiest onboarding for beginners. .com is ~$11/yr.</li>
+      <li><strong>Cloudflare Registrar</strong> — at-cost pricing (~$9/yr for .com), great DNS panel.</li>
+      <li><strong>Porkbun</strong> — cheaper for some TLDs.</li>
+    </ul>
+
+    <h2>What to do immediately after purchase</h2>
+    <ol class="list-decimal pl-6 text-slate-300">
+      <li>Open the DNS / Advanced DNS panel.</li>
+      <li>Add the records from <a class="text-sky-400" href="/playbook/02-warmup.html">stage 02's DNS section</a>. SPF first, DKIM second, DMARC third, MX fourth.</li>
+      <li>Verify the records with a tool like <a class="text-sky-400" href="https://mxtoolbox.com/spf.aspx" target="_blank" rel="noopener noreferrer">MXToolbox</a>.</li>
+    </ol>
+
+    <h2>Common mistakes</h2>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li>Buying the domain but waiting until day 8 to set DNS. By then Google's reputation-startup clock is already running.</li>
+      <li>Using <code>v=spf1 include:_spf.protonmail.com ~all</code> when your actual mail comes from Google Workspace. Mismatched SPF = spam.</li>
+      <li>Enabling DMARC <code>p=reject</code> in week 1. Use <code>p=none</code> for the first 3 weeks, monitor, then graduate.</li>
+    </ul>
+
+    <h2>Save your work</h2>
+    <p>When you finish, enter the domain in the <a class="text-sky-400" href="/wizard">wizard</a>. The app will save it as the From address and start a warmup plan for it.</p>
+
+  </article>
+
+  <p class="text-sm mt-12"><a href="/playbook/02-warmup.html" class="text-sky-400 hover:text-sky-300">Next: 02 · 14-day warmup →</a></p>
+</div>
+</body>
+</html>

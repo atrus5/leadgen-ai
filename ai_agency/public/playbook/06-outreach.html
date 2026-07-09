@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>06 · Niche-tuned outreach · LeadGen AI Playbook</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}article p{line-height:1.7}article h2{font-size:1.25rem;font-weight:700;margin-top:1.5rem;margin-bottom:.5rem}article li{margin-bottom:.4rem}code{background:#0b1220;color:#a7f3d0;padding:1px 5px;border-radius:4px}</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="max-w-3xl mx-auto px-6 py-10">
+  <a href="/playbook/" class="text-sm text-sky-400 hover:text-sky-300">← Back to playbook</a>
+  <h1 class="text-3xl font-extrabold mt-3 mb-2">Stage 06 · Niche-tuned outreach</h1>
+  <p class="text-sm text-slate-500 font-mono mb-8">Every niche has its own opener hooks, vocabulary, and followup cadence.</p>
+
+  <article class="space-y-4 text-slate-200">
+
+    <h2>Two-step composition</h2>
+    <ol class="list-decimal pl-6 text-slate-300">
+      <li><strong>Template</strong> (always runs): the niche DNA in <code>config/niches.json</code> provides the opener, followup pain, taboo-word list, and tone.</li>
+      <li><strong>Llama 3 refinement</strong> (only if Ollama is live): the local LLM re-phrases the opener to read like a real person wrote it.</li>
+    </ol>
+    <p>If Ollama isn't running, the templated body is the final body. That's intentional — it keeps the system useful when your VPS is rebuilding the model.</p>
+
+    <h2>The 24 niches we ship with</h2>
+    <p>Roofing, Real Estate, Dental, HVAC, Legal, Mortgage, Insurance, Fitness, Plumbing, Duct Cleaning, Gutters, Snow Removal, Grass &amp; Lawn, Tree Service, Care Aid, Mechanic, Cleaning Service, Pest Control, Pool Service, Painting, Pressure Washing, Electrician, Chiropractic, Retail.</p>
+
+    <h2>What's in the niche DNA record</h2>
+    <pre class="bg-slate-900 rounded-xl p-4 text-xs overflow-x-auto">{
+  "key": "Plumbing",
+  "tone": "neighborly, plain-spoken, trustworthy",
+  "vocabulary": ["water heater","tankless","drain","leak","burst","sewer line"],
+  "taboo_words": ["synergy","transformative","paradigm"],
+  "opener_hooks": [
+    "{firstName}, half the calls {businessName} is missing in {city} are on Sunday at 8am...",
+    "If {businessName} doesn't have an after-hours intake flow, ~60% of those calls are going to a competitor every weekend..."
+  ],
+  "followup_pain": "truck-roll economics — every missed dispatch is lost margin",
+  "followup_hook": "Water heater replacements this fall — what's your top-of-mind bottleneck now?"
+}</pre>
+
+    <h2>Why use taboos</h2>
+    <p>Cold emails full of "synergize", "transformative", "best-in-class" go straight to spam filters and out-of-brain filters. Each niche defines its own taboo list so the renderer scrubs them automatically.</p>
+
+    <h2>Adding a new niche</h2>
+    <ol class="list-decimal pl-6 text-slate-300">
+      <li>Open <code>config/niches.json</code>.</li>
+      <li>Append a new entry under <code>"niches": []</code>.</li>
+      <li>Reload the service (Flask reads the file at startup; for hot-reload, restart the process).</li>
+    </ol>
+
+    <h2>How the LLM prompt is shaped</h2>
+    <pre class="bg-slate-900 rounded-xl p-4 text-xs overflow-x-auto">system: You are a cold-email copywriter for local-service businesses.
+        You produce 4-6 sentence cold emails. Tone: plain-spoken,
+        never salesy, never pressuring. Hard rule: do not invent facts
+        about the recipient; only rephrase what you were given.
+        Hard rule: under 90 words total.
+
+user:   Niche: Plumbing
+        Recipient business: Smith Plumbing
+        Recipient contact (may be empty): Mike
+        City: Austin
+        Customer-lifetime-value estimate: $2K–8K per job
+
+        Rewrite the email body to read like it was written by a real person
+        for a real local owner-operator. Keep the core hook. Output ONLY the body.</pre>
+
+    <h2>Followups and breakups</h2>
+    <p>Two followups ship by default: day 3 and day 7. On top of the niche opener, they re-use <code>followup_pain</code> and <code>followup_hook</code> from the DNA record. To add a 4-touch sequence, edit <code>outreach/generator.py</code> and add new step handling.</p>
+
+  </article>
+
+  <p class="text-sm mt-12"><a href="/playbook/05-morning-brief.html" class="text-sky-400 hover:text-sky-300">← Previous</a> · <a href="/playbook/07-replies.html" class="text-sky-400 hover:text-sky-300">Next: 07 · Replies →</a></p>
+</div>
+</body>
+</html>

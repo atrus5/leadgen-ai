@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>04 · The nightly hunt · LeadGen AI Playbook</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}article p{line-height:1.7}article h2{font-size:1.25rem;font-weight:700;margin-top:1.5rem;margin-bottom:.5rem}article li{margin-bottom:.4rem}code{background:#0b1220;color:#a7f3d0;padding:1px 5px;border-radius:4px}</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="max-w-3xl mx-auto px-6 py-10">
+  <a href="/playbook/" class="text-sm text-sky-400 hover:text-sky-300">← Back to playbook</a>
+  <h1 class="text-3xl font-extrabold mt-3 mb-2">Stage 04 · The nightly hunt</h1>
+  <p class="text-sm text-slate-500 font-mono mb-8">Every night at 02:10 (configurable), the scheduler runs both Apollo and Google Places for every active client.</p>
+
+  <article class="space-y-4 text-slate-200">
+
+    <h2>How it works</h2>
+    <p>For each active client, the scheduler calls:</p>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li><code>hunters/apollo.py</code> — runs a <em>mixed people search</em> against Apollo's REST API with the niche mapped to keyword filters and the city+region as the geographic constraint.</li>
+      <li><code>hunters/google_places.py</code> — runs a Text Search on the Places API (New) for <code>{niche} {city}</code>, then folds in the first-place <code>type</code> for score weighting.</li>
+    </ul>
+    <p>Results are normalized into prospect dicts and upserted with the unique constraint <code>(client_id, external_id)</code> so a business found via Apollo today won't be re-inserted by Places tomorrow.</p>
+
+    <h2>Where each source shines</h2>
+    <h3 class="font-semibold mt-4">Apollo</h3>
+    <p>Better for:</p>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li>B2B services with verifiable decision makers: Software, Real Estate, Mortgage, Insurance, Legal, Marketing agencies.</li>
+      <li>Email is verified, not guessed. Good deliverability on day 1.</li>
+      <li>Costs Apollo credits. Free tier: 10k credits/month = enough for ~300 prospects.</li>
+    </ul>
+
+    <h3 class="font-semibold mt-4">Google Places</h3>
+    <p>Better for:</p>
+    <ul class="list-disc pl-6 text-slate-300">
+      <li>Hyper-local services with little to no online presence: HVAC, Plumbing, Roofing, Auto mechanic, Pest control, Pool service, Painting.</li>
+      <li>Verified business addresses, hours, ratings, review counts.</li>
+      <li>Email is not exposed by Places — you'll need Hunter.io enrichment or open the owner's site to find the contact form.</li>
+    </ul>
+
+    <h2>Run the hunt manually</h2>
+    <p>From the wizard's last stage, click "Run nightly now", or via <code>curl</code>:</p>
+    <pre class="bg-slate-900 rounded-xl p-4 text-xs overflow-x-auto">curl -X POST http://your-host/api/jobs/run \
+  -H "Content-Type: application/json" \
+  -d '{"name":"nightly_hunt"}'</pre>
+
+    <h2>What you see the next morning</h2>
+    <p>The morning brief emails you a digest like:</p>
+    <pre class="bg-slate-900 rounded-xl p-4 text-xs overflow-x-auto">Total new prospects inserted: 12
+
+• Johnson Roofing (Roofing) via Apollo.io: 6/8 inserted
+• Sunrise Dental (Dental) via Google Places: 4/12 inserted
+• Mountain Mortgage (Mortgage) via Apollo.io: 2/7 inserted</pre>
+    <p>Open LeadGen AI in your browser to review each prospect, choose which to contact, and tell the app to send a niche-tuned email.</p>
+
+    <h2>What to do if "0 inserted" appears for a week</h2>
+    <ul class="list-disc pl-6">
+      <li>Your Apollo or Google Places API key is unset/expired.</li>
+      <li>The city lookup is too narrow. Try zooming out to a metro area.</li>
+      <li>The niche mapping isn't quite right — open <code>config/niches.json</code> and review the keywords.</li>
+      <li>The hunters hit the daily quota cap of 50 (Apollo) or 30 (Places).</li>
+    </ul>
+
+  </article>
+
+  <p class="text-sm mt-12"><a href="/playbook/03-clients.html" class="text-sky-400 hover:text-sky-300">← Previous</a> · <a href="/playbook/05-morning-brief.html" class="text-sky-400 hover:text-sky-300">Next: 05 · Morning brief →</a></p>
+</div>
+</body>
+</html>

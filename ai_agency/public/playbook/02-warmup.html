@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>02 · 14-day warmup · LeadGen AI Playbook</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  article p { line-height: 1.7; }
+  article h2 { font-size:1.25rem; font-weight:700; margin-top:1.5rem; margin-bottom:.5rem; }
+  pre { background:#0b1220; color:#a7f3d0; border-radius:8px; padding:14px 16px;
+        overflow-x:auto; font-family: ui-monospace, "JetBrains Mono", Menlo, monospace; font-size:13px; }
+  table { width:100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { border-bottom: 1px solid #1e293b; padding: 7px 9px; text-align:left; }
+  th { color:#94a3b8; font-weight:600; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+<div class="max-w-3xl mx-auto px-6 py-10">
+  <a href="/playbook/" class="text-sm text-sky-400 hover:text-sky-300">← Back to playbook</a>
+  <h1 class="text-3xl font-extrabold mt-3 mb-2">Stage 02 · 14-day warmup</h1>
+  <p class="text-sm text-slate-500 font-mono mb-8">Two weeks. Don't skip this — new domains hit the spam folder 90% of the time without warmup.</p>
+
+  <article class="space-y-4 text-slate-200">
+
+    <h2>What is warmup?</h2>
+    <p>Mailbox providers (Gmail, Outlook, etc.) watch what happens to the messages a sender sends. If many of them go to spam, get marked as phishing, or get rejected, the sender lands on a blocklist. Warmup is the practice of gradually increasing volume while producing <em>normal-looking responses</em>: opens, replies, stars, marking-not-spam.</p>
+
+    <h2>The day-by-day plan</h2>
+    <table class="bg-slate-900 rounded-xl overflow-hidden">
+      <thead><tr><th>Day</th><th>Daily cap</th><th>What to send</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>2</td><td>Personal emails to friends with a Gmail or Outlook address. Ask them to reply.</td></tr>
+        <tr><td>2</td><td>3</td><td>Mix of personal replies and a forward-to-yourself round trip.</td></tr>
+        <tr><td>3</td><td>4</td><td>Subscribe to 2 newsletters; reply to them.</td></tr>
+        <tr><td>4</td><td>6</td><td>Send to colleagues asking trivial questions. Reply meaningfully.</td></tr>
+        <tr><td>5</td><td>8</td><td>Send calendar invites, "thanks!" notes, link shares.</td></tr>
+        <tr><td>6</td><td>10</td><td>Continue + reply to a Slack email digest.</td></tr>
+        <tr><td>7</td><td>12</td><td>Start 2 warmup-network huddles (auto-reply bots).</td></tr>
+        <tr><td>8</td><td>15</td><td>Send a soft cold email to 2–3 friendly owners who have explicitly said "yes I don't mind beta".</td></tr>
+        <tr><td>9</td><td>17</td><td>Add 3 more friendly cold emails.</td></tr>
+        <tr><td>10</td><td>19</td><td>Ramp to ~10 real cold emails.</td></tr>
+        <tr><td>11</td><td>22</td><td>Ramp to ~15 real cold emails.</td></tr>
+        <tr><td>12</td><td>25</td><td>Add follow-up #1 to day-10 recipients.</td></tr>
+        <tr><td>13</td><td>28</td><td>Add follow-up #2 to day-11 recipients.</td></tr>
+        <tr><td>14</td><td>32</td><td>Mark warmup complete in the wizard's warmup page.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>After day 14</h2>
+    <p>You can ramp up to whatever cap you've configured (default 40/day, configurable in <code>config/settings.json</code>'s <code>warmup.max_daily_after</code>).</p>
+
+    <h2>DNS — copy-paste</h2>
+    <p>Add these to your registrar before you send email #1.</p>
+
+    <h3 class="font-semibold mt-4">SPF</h3>
+    <pre>Type: TXT · Host: @ ·
+Value: v=spf1 include:_spf.google.com ~all</pre>
+    <p class="text-xs text-slate-400">If using Zoho: replace with <code>v=spf1 include:zoho.com ~all</code>.</p>
+
+    <h3 class="font-semibold mt-4">DKIM</h3>
+    <pre>Type: TXT · Host: google._domainkey ·
+Value: (paste what Google Workspace shows under Admin → Apps → Gmail → Authenticate email)</pre>
+
+    <h3 class="font-semibold mt-4">DMARC</h3>
+    <pre>Type: TXT · Host: _dmarc ·
+Value: v=DMARC1; p=none; rua=mailto:dmarc@YOUR-DOMAIN.COM</pre>
+
+    <h3 class="font-semibold mt-4">MX (Google Workspace)</h3>
+    <pre>Type: MX · Host: @ ·
+Priority 1: ASPMX.L.GOOGLE.COM
+Priority 10: ALT1.ASPMX.L.GOOGLE.COM
+Priority 10: ALT2.ASPMX.L.GOOGLE.COM</pre>
+
+    <h2>Troubleshooting</h2>
+    <ul class="list-disc pl-6">
+      <li>SPF returns "permerror"? You probably have two SPF records. Keep only one.</li>
+      <li>DKIM returns "fail"? The TXT record was likely cached before propagation finished. Wait 4 hours.</li>
+      <li>Outreach emails go directly to spam in week 1? You haven't set a DMARC policy — Gmail won't trust you yet.</li>
+    </ul>
+
+  </article>
+
+  <p class="text-sm mt-12"><a href="/playbook/01-domain.html" class="text-sky-400 hover:text-sky-300">← Previous</a> · <a href="/playbook/03-clients.html" class="text-sky-400 hover:text-sky-300">Next: 03 · Add a client →</a></p>
+</div>
+</body>
+</html>

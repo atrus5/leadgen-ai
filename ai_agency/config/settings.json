@@ -1,0 +1,28 @@
+{
+  "agent": {
+    "owner_email": "",
+    "from_name": "Your Agency",
+    "from_address": "hello@your-new-domain.com",
+    "smtp_host": "smtp.your-provider.com",
+    "smtp_port": 587,
+    "smtp_user": "hello@your-new-domain.com",
+    "smtp_pass": "",
+    "smtp_tls": "starttls",
+    "imap_host": "imap.your-provider.com",
+    "imap_port": 993,
+    "imap_user": "hello@your-new-domain.com",
+    "imap_pass": "",
+    "imap_ssl": true,
+    "morning_brief_to": "you@gmail.com",
+    "morning_brief_hour": 8,
+    "nightly_hunt_hour": 2
+  },
+  "apis": {
+    "apollo_api_key": "",
+    "apollo_use": true,
+    "google_places_api_key": "",
+    "google_places_use": true,
+    "hunter_api_key": "",
+    "hunter_use": false
+  }
+}

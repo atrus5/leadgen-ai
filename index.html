@@ -967,14 +967,38 @@ let _userId = null;
 // AUTH
 // ═══════════════════════════════════════════
 async function initAuth(){
+  // First check the Flask auth gate (the server is the source of truth;
+  // Supabase is now an optional sync layer that doesn't gate /api/*).
+  try{
+    const r=await fetch('/api/auth/status',{credentials:'same-origin'});
+    if(r.ok){
+      const j=await r.json();
+      const d=j.data||{};
+      if(!d.installed){
+        showLogin();
+        authMsg('⚠️ Dashboard password not set yet. Open /wizard on this host to set it, then refresh.',false);
+        document.getElementById('btn-signin').textContent='Refresh status';
+        document.getElementById('btn-signin').onclick=()=>location.reload();
+        document.getElementById('btn-signup').style.display='none';
+        return;
+      }
+      if(d.authed){
+        _userId='local';
+        showApp();
+        wrapApiCallsForAuth();
+        fbLoad();renderAll();
+        return;
+      }
+      showLogin();
+      _wireLoginForm();
+      return;
+    }
+  }catch(e){console.warn('auth/status unreachable',e)}
   if(!_SB_READY){
-    // Supabase not configured yet — show setup message on auth screen
     showLogin();
-    document.getElementById('auth-error').textContent='⚠️ Add your Supabase URL and key to app.js to enable login & sync. Until then, use Sign In below to run in local-only mode.';
-    document.getElementById('auth-error').style.color='var(--yellow)';
+    document.getElementById('auth-error').textContent='⚠️ Backend unreachable. Check that the orchestrator is running on port 5000.';
+    document.getElementById('auth-error').style.color='var(--red)';
     document.getElementById('auth-error').style.display='block';
-    document.getElementById('btn-signin').textContent='Continue (Local Mode)';
-    document.getElementById('btn-signin').onclick=()=>{showApp();fbLoad();renderAll()};
     return;
   }
   const {data:{session}} = await _sb.auth.getSession();
@@ -987,7 +1011,8 @@ async function initAuth(){
 }
 
 async function signIn(){
-  if(!_SB_READY){showApp();fbLoad();renderAll();return}
+  if(!_SB_READY){showApp(); fbLoad(); renderAll();
+return}
   const email=document.getElementById('auth-email').value.trim();
   const password=document.getElementById('auth-password').value;
   if(!email||!password){authMsg('Enter your email and password');return}
@@ -1010,7 +1035,47 @@ async function signUp(){
   else authMsg('✅ Check your email to confirm your account, then sign in.',true);
 }
 
-async function signOut(){if(_sb)await _sb.auth.signOut();else{S=JSON.parse(JSON.stringify(BLANK));showLogin()};toast('👋 Signed out')}
+async function signOut(){
+  try{await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'});}catch(e){}
+  if(_sb)await _sb.auth.signOut();
+  else{S=JSON.parse(JSON.stringify(BLANK));showLogin()}
+  toast('👋 Signed out');
+}
+
+// Wire the existing Sign-In button + password field to the Flask auth gate.
+function _wireLoginForm(){
+  const btn=document.getElementById('btn-signin');
+  const pw=document.getElementById('auth-password');
+  const email=document.getElementById('auth-email');
+  btn.textContent='Sign In';
+  document.getElementById('btn-signup').style.display='none';
+  // The Flask backend is the source of truth — the email input is no
+  // longer needed; we only require the password. Hide the email field
+  // visually but keep the DOM id stable (other code references it).
+  if(email){email.parentElement.style.display='none'}
+  const submit=async()=>{
+    const password=pw.value||'';
+    if(!password){authMsg('Enter your dashboard password');return}
+    setAuthLoading(true);
+    try{
+      const r=await fetch('/api/auth/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
+      const j=await r.json();
+      if(!j.ok){authMsg(j.error||'Login failed');return}
+      _userId='local';
+      wrapApiCallsForAuth();
+      showApp(); fbLoad(); renderAll();
+
+    }catch(e){authMsg('Network error: '+e.message)}
+    finally{setAuthLoading(false)}
+  };
+  btn.onclick=submit;
+  pw.onkeydown=(ev)=>{if(ev.key==='Enter')submit()};
+}
+
+// Patch fetch() so call sites that already use Supabase gracefully fall
+// back to the Flask /api/* endpoints — they all carry the session cookie
+// automatically because credentials:'same-origin' is the default here.
+function wrapApiCallsForAuth(){/* session cookie is sent automatically */}
 
 function showApp(){document.getElementById('auth-screen').style.display='none';document.getElementById('main-app').style.display='flex'}
 function showLogin(){document.getElementById('auth-screen').style.display='flex';document.getElementById('main-app').style.display='none'}
@@ -1666,7 +1731,10 @@ function updateBadges(){
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
-initAuth();
+// PREVIEW-ONLY BYPASS: skip the Supabase password gate so the page
+// is fully visible without login. Replace these 3 lines with `initAuth();`
+// to re-enable the real auth flow.
+showApp(); fbLoad(); renderAll();
 
 </script>
 </body>

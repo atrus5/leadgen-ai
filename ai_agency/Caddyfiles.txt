@@ -1,0 +1,106 @@
+# ────────────────────────────────────────────────────────────────────────
+# Production Caddy config for LeadGen AI.
+#
+# Replace `agency.example.com` with the real domain the operator pointed
+# at this box (must match the value of `tracking.base_url` in the wizard).
+# Caddy will fetch + renew the TLS cert via Let's Encrypt automatically
+# once DNS resolves and port 80 + 443 are reachable from the Internet.
+#
+# Health probe: GET /healthz returns 200 if the Flask backend is up.
+# Pixel abuse: /t/o/<id>.gif is rate-limited to 60 hits/second per IP; the
+# upstream Flask app already returns 200+bytes on every response (never
+# 4xx) so this just keeps random scanners from drowning the DB.
+# ────────────────────────────────────────────────────────────────────────
+
+# 1) Plain-HTTP listener: redirect toward HTTPS, with HSTS preload hint
+#    so a follow-up visit sticks even if the redirect path ever regresses.
+agency.example.com:80 {
+    redir https://{host}{uri} permanent
+}
+
+# 2) Public-facing HTTPS listener. Caddy auto-provisions a Let's Encrypt
+#    certificate (requires {host} to resolve + ports 80/443 open globally).
+agency.example.com:443 {
+    encode zstd gzip
+
+    # Security headers — applied to every response, including static files
+    # and API JSON. HSTS preload list ready; CFP / X-Content-Type-Options
+    # blocks classic content-sniffing; Referrer-Policy scoped to same-origin.
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "same-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        # CSP: only allow inline styles (the app uses them heavily) and
+        # the agency's own assets. Includes Anthropic if you use Claude.
+        Content-Security-Policy "
+            default-src 'self';
+            img-src 'self' data:;
+            style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+            font-src 'self' https://fonts.gstatic.com data:;
+            script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+            connect-src 'self';
+            frame-ancestors 'none';
+            base-uri 'self';
+        "
+        # Strip the Server banner — less recon for scanners.
+        -Server
+    }
+
+    # Optional basic auth in front of the Wizard for the first 24h of
+    # bootstrap. Once the operator sets a dashboard password via the
+    # wizard, remove this directive — the Flask session is the real gate.
+    # basicauth {
+    #     operator JDJhJDE0JDhBcTV4YkEubGF5...
+    # }
+
+    # Static assets served straight from ./public (faster than a reverse
+    # proxy hop when the file is in Caddy's root).
+    root * /home/paul/leadgen-ai/ai_agency/public
+    @static path /playbook/* /assets/* /favicon.ico
+    handle @static {
+        file_server
+    }
+
+    # 3) Rate-limit the tracking pixel so a misconfigured scanner can't
+    #    flood the DB with open rows. Other endpoints don't need it (the
+    #    Flask backend already enforces auth + daily quota).
+    @track path_regexp ^/t/o/[^/]+\.gif$
+    handle @track {
+        # 60 r/s per source IP, burst 90, then 429.
+        reverse_proxy 127.0.0.1:5000
+        rate_limit {
+            zone tracking_px {
+                key    {remote_host}
+                events 60
+                window 1s
+            }
+        }
+    }
+
+    # 4) Everything else proxied to the Flask backend.
+    reverse_proxy /run-audit    127.0.0.1:5000
+    reverse_proxy /new-lead     127.0.0.1:5000
+    reverse_proxy /api/*        127.0.0.1:5000
+    reverse_proxy /healthz      127.0.0.1:5000
+    reverse_proxy /t/o/*        127.0.0.1:5000
+    reverse_proxy /wizard       127.0.0.1:5000
+    reverse_proxy /wizard/*     127.0.0.1:5000
+    reverse_proxy /playbook/*   127.0.0.1:5000
+    reverse_proxy /             127.0.0.1:5000
+}
+
+# Optional: per-host block for the dev / staging instance. Same shape,
+# different host + no preload.
+staging.agency.example.com:443 {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=86400"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+    }
+
+    reverse_proxy 127.0.0.1:5000
+}

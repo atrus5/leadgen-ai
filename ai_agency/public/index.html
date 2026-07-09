@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Infrastructure Architect | Enterprise B2B Systems</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans selection:bg-sky-500 selection:text-slate-950">
+
+    <div class="min-h-screen flex flex-col justify-between max-w-5xl mx-auto px-6 py-12">
+        <!-- Header Profile section -->
+        <header class="border-b border-slate-800 pb-8">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">AI Systems Architect</h1>
+                <span class="px-3 py-1 bg-slate-900 border border-slate-700 rounded-full text-xs font-mono text-emerald-400">Node: Production_Active</span>
+            </div>
+            <p class="mt-4 text-slate-400 max-w-xl text-lg">Locally deployed Llama 3 agentic infrastructure built to scale enterprise pipelines without middleman platform fees.</p>
+        </header>
+
+        <!-- Main Content Core -->
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-12 my-12 items-center">
+            <div>
+                <h2 class="text-2xl font-bold mb-4 text-slate-200">The Architecture Advantage</h2>
+                <ul class="space-y-4 text-slate-400 text-sm">
+                    <li class="flex items-start"><span class="text-sky-400 mr-2 font-mono">▸</span> Zero Cloud API Retainers - Systems hosted strictly on local infrastructure.</li>
+                    <li class="flex items-start"><span class="text-sky-400 mr-2 font-mono">▸</span> Automated Classification - Inbound sentiment processed using local language processing pipelines.</li>
+                    <li class="flex items-start"><span class="text-sky-400 mr-2 font-mono">▸</span> Absolute Data Integrity - Private lists never hit centralized marketing tech nodes.</li>
+                </ul>
+            </div>
+
+            <!-- Lead Capture Component -->
+            <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl">
+                <h3 class="text-xl font-bold mb-2 text-slate-200">Request Autonomous Audit</h3>
+                <p class="text-xs text-slate-400 mb-6 font-mono">Initial analysis runs a live systemic script map against market data.</p>
+                
+                <form id="auditForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-mono text-slate-400 mb-2">Corporate Entity</label>
+                        <input type="text" id="bizName" placeholder="e.g. Acme Corp" class="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-lg p-3 text-sm outline-none transition" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-mono text-slate-400 mb-2">Secure Routing Email</label>
+                        <input type="email" id="bizEmail" placeholder="you@company.com" class="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-lg p-3 text-sm outline-none transition" required>
+                    </div>
+                    <button type="submit" class="w-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold py-3 px-4 rounded-lg text-sm transition tracking-wide shadow-lg shadow-sky-500/10">Initialize Market Scan</button>
+                </form>
+
+                <div id="feedbackBox" class="mt-4 p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono hidden text-sky-400"></div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-slate-900 pt-6 text-center text-xs font-mono text-slate-600">
+            System Infrastructure Engine v2.6 // All Models Active
+        </footer>
+    </div>
+
+    <!-- Frontend Form Backend Connection Script -->
+    <script>
+        document.getElementById('auditForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const feedback = document.getElementById('feedbackBox');
+            feedback.innerText = "🤖 Initializing localized data mapping protocols...";
+            feedback.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/run-audit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_name: document.getElementById('bizName').value,
+                        email: document.getElementById('bizEmail').value
+                    })
+                });
+                
+                if(response.ok) {
+                    const data = await response.json();
+                    feedback.innerText = `🟢 Initialization Complete.\nMarket Optimization Target Score: ${data.score}\nAudit logs compiled. Check secure inbox folder.`;
+                } else {
+                    feedback.innerText = "🔴 Server runtime interface responded with an processing error.";
+                }
+            } catch (err) {
+                feedback.innerText = "🔴 Fatal: Network interface failed to bridge to backend daemon process.";
+            }
+        });
+    </script>
+</body>
+</html>
