@@ -11,11 +11,13 @@ But secrets that were stored BEFORE you set the env var are still
 plaintext. Run this once after enabling LEADGEN_MASTER_KEY to convert
 them in-place.
 
-Usage::
+Usage (one workspace, or sweep all of them — each has its own SQLite
+file now, so there's no single "the" settings table anymore)::
 
     export LEADGEN_MASTER_KEY=<your-strong-passphrase>
-    python -m ai_agency.scripts.encrypt_secrets                # do it
-    python -m ai_agency.scripts.encrypt_secrets --dry-run      # preview
+    python -m ai_agency.scripts.encrypt_secrets --workspace <id>
+    python -m ai_agency.scripts.encrypt_secrets --all-workspaces
+    python -m ai_agency.scripts.encrypt_secrets --all-workspaces --dry-run
 
 The script is idempotent on the encrypted flag \u2014 hitting a row that is
 already wrapped is a no-op. Run it multiple times if needed.
@@ -37,25 +39,13 @@ _HERE = Path(__file__).resolve()
 _REPO = _HERE.parent.parent.parent
 sys.path.insert(0, str(_REPO))
 
-from ai_agency import db, secret_keeper  # noqa: E402
+from ai_agency import db, platform_db, secret_keeper  # noqa: E402
 
 SENSITIVE_KEYS = list(db.SENSITIVE_KEYS)
 
 
-def main() -> int:
-    p = argparse.ArgumentParser()
-    p.add_argument("--dry-run", action="store_true", help="print what would change; don't write")
-    args = p.parse_args()
-
-    db.init_schema()
-    db.ensure_default_settings()
-
-    sk = secret_keeper.get()
-    if not sk.enabled:
-        print("LEADGEN_MASTER_KEY is not set or cryptography is missing.")
-        print("Set it (e.g. `export LEADGEN_MASTER_KEY=...`) and re-run.")
-        return 2
-
+def _run_for_workspace(workspace_id: str, *, dry_run: bool, sk) -> tuple[int, int]:
+    db.use_workspace(workspace_id)
     conn = db.get_db()
     rows = conn.execute("SELECT key, value FROM settings").fetchall()
     changed = 0
@@ -77,23 +67,59 @@ def main() -> int:
             skipped += 1
             continue
         new = sk.wrap(cur, field_paths=db._SENSITIVE_FIELD_PATHS.get(r["key"], ()))
-        if args.dry_run:
-            print(f"WOULD wrap settings.{r['key']}")
+        if dry_run:
+            print(f"  WOULD wrap settings.{r['key']}")
         else:
             conn.execute(
                 "UPDATE settings SET value=?, updated_at=? WHERE key=?",
                 (json.dumps(new), db._now(), r["key"]),
             )
-            print(f"wrapped settings.{r['key']}")
+            print(f"  wrapped settings.{r['key']}")
         changed += 1
 
-    if not args.dry_run and changed:
+    if not dry_run and changed:
         db.audit("settings.migrated_to_encryption", {"changed": changed, "by": "encrypt_secrets.py"})
+    return changed, skipped
+
+
+def main() -> int:
+    p = argparse.ArgumentParser()
+    p.add_argument("--dry-run", action="store_true", help="print what would change; don't write")
+    g = p.add_mutually_exclusive_group(required=True)
+    g.add_argument("--workspace", help="run for one workspace id")
+    g.add_argument("--all-workspaces", action="store_true", help="run for every active workspace")
+    args = p.parse_args()
+
+    sk = secret_keeper.get()
+    if not sk.enabled:
+        print("LEADGEN_MASTER_KEY is not set or cryptography is missing.")
+        print("Set it (e.g. `export LEADGEN_MASTER_KEY=...`) and re-run.")
+        return 2
+
+    platform_db.init_schema()
+    if args.all_workspaces:
+        targets = [w["id"] for w in platform_db.list_active_workspaces()]
+        if not targets:
+            print("no active workspaces found.")
+            return 0
+    else:
+        ws = platform_db.get_workspace(args.workspace)
+        if not ws:
+            print(f"no workspace with id {args.workspace!r}.")
+            return 2
+        targets = [ws["id"]]
+
+    total_changed = total_skipped = 0
+    for wid in targets:
+        print(f"=== workspace {wid} ===")
+        changed, skipped = _run_for_workspace(wid, dry_run=args.dry_run, sk=sk)
+        total_changed += changed
+        total_skipped += skipped
 
     print()
     print(f"  dry_run : {args.dry_run}")
-    print(f"  changed : {changed}")
-    print(f"  skipped : {skipped} (already encrypted)")
+    print(f"  changed : {total_changed}")
+    print(f"  skipped : {total_skipped} (already encrypted)")
     return 0
 
 

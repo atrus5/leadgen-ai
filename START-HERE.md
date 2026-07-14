@@ -68,7 +68,7 @@ Make sure the **host itself** has these; everything else cascades.
 | DNS                                  | A real domain pointing A/AAAA at this host's public IP        |
 | Ports                                | TCP 80 + 443 open from the public Internet (Caddy terminations)|
 | Reverse-proxy                        | Caddy v2 installed (`/usr/local/bin/caddy` or `apt install`) |
-| LLM (optional but recommended)        | Ollama on `localhost:11434` with the model in `apis.ollama_model` (default `llama3`) pulled. Without it, intent classification & email generation degrade to keyword-only heuristics. |
+| LLM (optional but recommended)        | A Groq API key (`apis.groq_api_key`, free at console.groq.com/keys) for the model in `apis.groq_model` (default `llama-3.3-70b-versatile`). Without it, intent classification & email generation degrade to keyword-only heuristics. |
 | Outbound mail                        | At least ONE warmed-up sending domain (DNS-aligned SPF/DKIM/DMARC) — the `/wizard` step 1 expects a domain you own. Buy/use cheap: 1yr .com + Google Workspace or Zoho at $1/mo. |
 | Time budget                          | First boot end-to-end is ~30 min including TLS + DNS + warming. Plan accordingly. |
 
@@ -196,7 +196,7 @@ The wizard lives at `/wizard` and is served by the Flask backend. Steps:
 | 2 — DNS Records  | (read-only — copy-paste SPF/DKIM/DMARC into your DNS host) | Doing this wrong = 90% spam rate, no triage, just delete the domain and try again.|
 | 3 — Mailbox      | Choose: **Gmail/Workspace/Zoho/SES** — pick the preset that matches your provider | Preset auto-fills step 4 with sane defaults.                |
 | 4 — SMTP/IMAP    | smtp_host, smtp_user, smtp_pass, imap_host, imap_user, imap_pass. Use **app passwords**, not your real account password.| Test buttons at the bottom of the step will round-trip.  |
-| 5 — API Keys     | Apollo (optional), Google Places (optional), Ollama host. **Tracking base_url** needs to be set to your `https://your.domain.tld` for the tracking pixel to work.| Ollama host is `http://localhost:11434` if co-located.        |
+| 5 — API Keys     | Apollo (optional), Google Places (optional), Groq API key (optional). **Tracking base_url** needs to be set to your `https://your.domain.tld` for the tracking pixel to work.| Groq key comes from console.groq.com/keys — free tier.        |
 | 6 — Schedule     | `nightly_hunt_hour` (default 2am), `morning_brief_hour` (default 8am), `reply_poller` (default every 15 min), toggle scheduler.enabled.| First the scheduler is disabled so you can test send-by-hand. |
 
 The wizard saves on every change (`setKey` listener). Don't worry about

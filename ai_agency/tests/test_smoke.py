@@ -10,7 +10,7 @@ Or use the helper:
 
 What it covers:
   1. SQLite schema creates the 12 expected tables.
-  2. DEFAULT_SETTINGS seeds `apis.ollama_model = "llama3"`.
+  2. DEFAULT_SETTINGS seeds `apis.groq_model = "llama-3.3-70b-versatile"`.
   3. Insert a client + insert a prospect works.
   4. UNIQUE(client_id, external_id) blocks duplicate prospects.
   5. niche subject_templates vary randomly across renders.
@@ -20,17 +20,16 @@ What it covers:
      bumps sender_quota, and is idempotent inside a 7-day window.
   9. send_to_prospect returns "blacklisted" when the receiver is blacklisted.
  10. Flask /healthz returns 200.
- 11. Flask /api/settings/test-llm returns 500 with the pip-hint when the
-     `ollama` Python package is unavailable.
+ 11. Flask /api/settings/test-llm returns 422 when apis.groq_api_key is unset.
 
-Mocked: SMTP (noop), IMAP (not exercised — reply ingestion has its own path),
-Ollama import (artificially fails for the test-llm 500 test).
+Mocked: SMTP (noop), IMAP (not exercised — reply ingestion has its own path).
+Groq is never called — the test-llm test only exercises the unconfigured-key
+guard, which needs no network access.
 
 No external services touched.
 """
 from __future__ import annotations
 
-import builtins
 import json
 import os
 import shutil
@@ -49,7 +48,7 @@ _PACKAGE_PARENT = _AGENCY_PKG.parent              # .../leadgen-ai
 sys.path.insert(0, str(_PACKAGE_PARENT))
 
 # Now import ai_agency normally.
-from ai_agency import config, db  # noqa: E402
+from ai_agency import config, db, platform_db  # noqa: E402
 
 # Load the rest of the modules without requiring ai_agency.outreach.* package init.
 import importlib.util as _u  # noqa: E402
@@ -88,39 +87,46 @@ _SENDER  # already loaded above; alias for clarity in the new tests
 # ── Bootstrap ────────────────────────────────────────────────────────────
 
 def _bootstrap() -> None:
-    """Initialise schema + default settings + auth once before any test runs.
+    """Initialise a fresh per-run workspace + platform admin before any test
+    runs. Uses a tmp WORKSPACES_DIR + tmp platform.db so the developer's
+    real data/ is never touched and the suite is hermetic across
+    invocations.
 
-    Uses a per-run tmpfile DB so the developer's data/agency.db is never
-    touched and the suite is hermetic across invocations. Order matters:
-    reset the DB path BEFORE init_schema; init_schema BEFORE
-    ensure_default_settings (settings reads its own schema)."""
-    # Point DB_PATH at a fresh tmpfile and clear any cached connection
-    # so `_connect()` re-opens against the new path on next access.
-    fd, tmp_path = tempfile.mkstemp(suffix=".db", prefix="leadgen_smoke_")
-    os.close(fd)
-    db.DB_PATH = Path(tmp_path)
-    db.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    db._LOCAL.conn = None
-    db.init_schema()
-    db.ensure_default_settings()
-    # Seed auth + webhook_secret so the api Blueprint's before_request
-    # hook doesn't 401 our existing /api/* test calls. Real operator-set
-    # passwords go through /wizard; here we set the bcrypt hash directly.
+    Multi-tenant note: every table now lives in a per-workspace SQLite file
+    (see db.py's db.use_workspace()); there's no more single global
+    db.DB_PATH to repoint. Accounts also no longer live in a single
+    settings.auth key — they're rows in platform_db.users, one per
+    (workspace, login)."""
+    tmp_root = Path(tempfile.mkdtemp(prefix="leadgen_smoke_"))
+    db.WORKSPACES_DIR = tmp_root / "workspaces"
+    platform_db.DB_PATH = tmp_root / "platform.db"
+    platform_db._LOCAL.conn = None
+    platform_db.init_schema()
+    platform_db.ensure_default_platform_settings()
+
+    ws = platform_db.create_workspace(name="Smoke Test Workspace", created_by_admin_id=None)
+    _SMOKE_WORKSPACE_ID["value"] = ws["id"]
+    db.use_workspace(ws["id"])  # lazily runs init_schema()+ensure_default_settings() for it
+
+    # Seed a real owner login + webhook_secret so the api Blueprint's
+    # before_request hook doesn't 401 our existing /api/* test calls. Real
+    # operator accounts go through /accept-invite.html; here we create the
+    # user row directly.
     try:
         import bcrypt
         pw = "smoketest-password-123"
-        db.set_setting("auth", {
-            "password_hash": bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt(rounds=4)).decode("ascii"),
-            "scheme": "bcrypt-4-test",
-        })
-        # Stash the password globally so _logged_in_client() can reuse it.
+        ph = bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt(rounds=4)).decode("ascii")
+        user = platform_db.create_user(workspace_id=ws["id"], email="smoketest@example.com", password_hash=ph, role="owner")
         _SMOKE_TEST_PASSWORD["value"] = pw
+        _SMOKE_USER_ID["value"] = user["id"]
     except ImportError:
         pass  # bcrypt not installed; auth tests will skip gracefully
     db.set_setting("webhook_secret", {"value": "smoke-webhook-secret"})
 
 
 _SMOKE_TEST_PASSWORD: dict = {"value": "smoketest-password-123"}
+_SMOKE_WORKSPACE_ID: dict = {"value": None}
+_SMOKE_USER_ID: dict = {"value": None}
 
 
 # ── Test rig ─────────────────────────────────────────────────────────────
@@ -156,49 +162,23 @@ def _now_iso() -> str:
 
 def _logged_in_client(app_mod):
     """Create a Flask test_client() that satisfies the api-before_request
-    auth gate, without going through /api/auth/login.
+    auth gate by seeding a real session (user_id/workspace_id/role) for the
+    smoke-test workspace + user created in _bootstrap(), without going
+    through /api/auth/login.
 
-    Two-layered approach:
-    1. session_transaction() seeds session['authed']=True (covers the
-       canonical cookie-based path; future code that ALSO needs to read
-       session.* works).
-    2. monkey-patch auth.is_authed to return True so the BEFORE_REQUEST
-       gate is unconditionally satisfied in this test process. This
-       bypasses the SESSION_COOKIE_SECURE cross-test state leak entirely
-
-       (test_sender_embeds_tracking_when_enabled flips tracking.base_url
-       to https which previously triggered SESSION_COOKIE_SECURE=True
-       on every subsequent app instance, which made test_client refuse to
-       attach the session cookie over HTTP, which made subsequent
-       `auth.is_authed()` reads return False and the gate 401).
-
-    The patch is restored at main()'s end so production callers and any
-    later test in the suite see the real auth.is_authed.
+    No monkey-patch needed anymore: the old version of this helper patched
+    auth.is_authed() to work around SESSION_COOKIE_SECURE flipping mid-suite
+    whenever a test set a workspace's own tracking.base_url to https —
+    that's no longer possible, since cookie security is now a one-time,
+    platform-level boot setting (see app.py) rather than derived from any
+    workspace's settings.
     """
-    import ai_agency.auth as _auth_module
-    if not _AUTH_PATCH_ACTIVE["value"]:
-        _AUTH_PATCH_ACTIVE["value"] = True
-        _ORIGINAL_IS_AUTHED["value"] = _auth_module.is_authed
-        _auth_module.is_authed = lambda: True
-
     c = app_mod.app.test_client()
     with c.session_transaction() as sess:
-        sess["authed"] = True
+        sess["user_id"] = _SMOKE_USER_ID["value"]
+        sess["workspace_id"] = _SMOKE_WORKSPACE_ID["value"]
+        sess["role"] = "owner"
     return c
-
-
-_AUTH_PATCH_ACTIVE: dict = {"value": False}
-_ORIGINAL_IS_AUTHED: dict = {"value": None}
-
-
-def _restore_auth_is_authed() -> None:
-    """Restore auth.is_authed to the real implementation. Called once at
-    the very end of main() so subsequent tests or production callers
-    don't see the monkey-patch."""
-    if _AUTH_PATCH_ACTIVE["value"]:
-        import ai_agency.auth as _auth_module
-        _auth_module.is_authed = _ORIGINAL_IS_AUTHED["value"]
-        _AUTH_PATCH_ACTIVE["value"] = False
 
 
 def _seed_agent_settings() -> None:
@@ -224,7 +204,7 @@ def _seed_agent_settings() -> None:
             "nightly_hunt_hour": 2,
         },
     )
-    config.load_settings.cache_clear()
+    config.invalidate_settings()
 
 
 # ── Tests ────────────────────────────────────────────────────────────────
@@ -253,12 +233,15 @@ def test_init_schema() -> None:
     assert not missing, f"missing tables: {missing}; got {sorted(names)}"
 
 
-def test_settings_seed_ollama_model() -> None:
-    """DEFAULT_SETTINGS[\"apis\"] seeds ollama_model on first boot."""
+def test_settings_seed_groq_defaults() -> None:
+    """DEFAULT_SETTINGS[\"apis\"] seeds groq_model (and an empty groq_api_key) on first boot."""
     s = config.load_settings()
     apis = s.get("apis", {})
-    assert apis.get("ollama_model") == "llama3", (
-        f"expected apis.ollama_model='llama3', got {apis.get('ollama_model')!r}"
+    assert apis.get("groq_model") == "llama-3.3-70b-versatile", (
+        f"expected apis.groq_model='llama-3.3-70b-versatile', got {apis.get('groq_model')!r}"
+    )
+    assert apis.get("groq_api_key") == "", (
+        f"expected apis.groq_api_key='' by default, got {apis.get('groq_api_key')!r}"
     )
 
 
@@ -314,7 +297,7 @@ def test_prospect_dedupe() -> None:
 def test_subject_templates_vary_randomly() -> None:
     """Plumbing templates provide ≥3 distinct subjects across repeated renders."""
     niches = json.loads(
-        (_AGENCY_PKG / "config" / "niches.json").read_text()
+        (_AGENCY_PKG / "config" / "niches.json").read_text(encoding="utf-8")
     )["niches"]
     plumbing = next(n for n in niches if n["key"] == "Plumbing")
     seen: set[str] = set()
@@ -379,7 +362,7 @@ def test_send_to_prospect_records_and_bumps_quota() -> None:
     _SENDER._send_smtp = fake_send  # type: ignore[attr-defined]
 
     niches = json.loads(
-        (_AGENCY_PKG / "config" / "niches.json").read_text()
+        (_AGENCY_PKG / "config" / "niches.json").read_text(encoding="utf-8")
     )["niches"]
     plumbing = next(n for n in niches if n["key"] == "Plumbing")
     templ = _TEMPLATES.cold_email(
@@ -754,33 +737,36 @@ def test_content_type_enforcement_returns_415():
 # ── Secret-keeping and global-dedup coverage (Tasks #3, #4) ────────────────
 
 def test_email_contacts_dedup_blocks_duplicate_emails():
-    """The global email_contacts table prevents a second prospect with the
-    same email from being inserted under a different client_id (the model
-    behavior we want from Task #3)."""
-    fd, tmp_path = tempfile.mkstemp(suffix=".db", prefix="leadgen_dedup_")
-    os.close(fd)
-    db.DB_PATH = Path(tmp_path)
-    db._LOCAL.conn = None
-    db.init_schema()
-    # Insert first contact
-    cid = uuid.uuid4().hex
-    db.get_db().execute(
-        "INSERT INTO email_contacts(id, email, business_name, "
-        "first_seen_at, last_seen_at) VALUES(?,?,?,?,?)",
-        (cid, "shared@example.com", "First Biz",
-         db._now(), db._now()),
-    )
-    # A second insert for the same email must fail the UNIQUE constraint.
+    """The email_contacts table (per-workspace, like everything else now)
+    prevents a second prospect with the same email from being inserted
+    under a different client_id (the model behavior we want from Task #3).
+    Uses its own fresh workspace so it doesn't collide with rows any other
+    test already inserted into the shared smoke-test workspace — and
+    restores the shared workspace afterward (try/finally) so later tests
+    in the suite aren't left pointed at this throwaway one."""
+    db.use_workspace(uuid.uuid4().hex)
     try:
+        # Insert first contact
+        cid = uuid.uuid4().hex
         db.get_db().execute(
             "INSERT INTO email_contacts(id, email, business_name, "
             "first_seen_at, last_seen_at) VALUES(?,?,?,?,?)",
-            (uuid.uuid4().hex, "shared@example.com", "Second Biz",
+            (cid, "shared@example.com", "First Biz",
              db._now(), db._now()),
         )
-    except sqlite3.IntegrityError:
-        return  # expected
-    raise AssertionError("expected IntegrityError on duplicate email")
+        # A second insert for the same email must fail the UNIQUE constraint.
+        try:
+            db.get_db().execute(
+                "INSERT INTO email_contacts(id, email, business_name, "
+                "first_seen_at, last_seen_at) VALUES(?,?,?,?,?)",
+                (uuid.uuid4().hex, "shared@example.com", "Second Biz",
+                 db._now(), db._now()),
+            )
+        except sqlite3.IntegrityError:
+            return  # expected
+        raise AssertionError("expected IntegrityError on duplicate email")
+    finally:
+        db.use_workspace(_SMOKE_WORKSPACE_ID["value"])
 
 
 def test_secret_keeper_round_trips_when_master_key_set():
@@ -819,7 +805,7 @@ def test_sender_embeds_tracking_when_enabled() -> None:
     current = config.load_settings()
     current["tracking"] = {"enabled": True, "base_url": "https://agency.example.com"}
     db.set_setting("tracking", current["tracking"])
-    config.load_settings.cache_clear()
+    config.invalidate_settings()
 
     # Reset state for pid_smoke_1 so we can send a fresh step
     db.get_db().execute(
@@ -839,7 +825,7 @@ def test_sender_embeds_tracking_when_enabled() -> None:
         return True, "ok"
     _SENDER._send_smtp = _fake_on
 
-    niches = json.loads((_AGENCY_PKG / "config" / "niches.json").read_text())["niches"]
+    niches = json.loads((_AGENCY_PKG / "config" / "niches.json").read_text(encoding="utf-8"))["niches"]
     plumbing = next(n for n in niches if n["key"] == "Plumbing")
     templ = _TEMPLATES.cold_email(
         plumbing, business_name="Smith Plumbing Pros",
@@ -884,7 +870,7 @@ def test_sender_does_not_embed_tracking_when_disabled() -> None:
     current = config.load_settings()
     current["tracking"] = {"enabled": False, "base_url": ""}
     db.set_setting("tracking", current["tracking"])
-    config.load_settings.cache_clear()
+    config.invalidate_settings()
 
     db.get_db().execute(
         "DELETE FROM prospect_emails WHERE prospect_id=? AND step=?",
@@ -934,7 +920,6 @@ def test_stats_open_rate_endpoint_returns_breakdown() -> None:
          "s", "b", "smoke@example.com", _now_iso(), "<m>"),
     )
     db.record_open(pe_id, "test-ua", "127.0.0.1")
-    client = app_mod.app.test_client()
     r = client.get("/api/stats/open-rate")
     assert r.status_code == 200, f"expected 200, got {r.status_code} {r.get_data(as_text=True)}"
     j = r.get_json()
@@ -960,86 +945,62 @@ def test_route_healthz_returns_200() -> None:
     assert j.get("data", {}).get("db") is True, "expected healthz.data.db=True"
 
 
-def test_route_test_llm_pins_content_type_and_ollama_guard() -> None:
+def test_route_test_llm_pins_content_type_and_groq_guard() -> None:
     """Pins BOTH branches the /api/settings/test-llm guard produces:
 
     1. POST without `Content-Type: application/json` is short-circuited by
        the api-before_request JSON-CT hook → 415.
-    2. POST WITH `Content-Type: application/json` while `ollama` python
-       package import is failing → 500 (route's own `pip install ollama`
-       hint). This is the operator-facing failure mode.
+    2. POST WITH `Content-Type: application/json` while apis.groq_api_key is
+       unset → 422 with an operator-facing hint to add it in the wizard.
+       This never touches the network — Groq is only called once a key is
+       configured, so the test needs no external service.
 
     Without parametrising these we lose the ability to detect a regression
     that collapses the two guards into one (e.g. a future refactor that
-    swallows ImportError silently, or a JSON-CT hook applied to the
-    pixell path by mistake)."""
+    swallows the missing-key check silently, or a JSON-CT hook applied to
+    the pixel path by mistake)."""
     if not HAS_FLASK:
         return "skip"
     try:
         import bcrypt  # noqa: F401
     except ImportError:
         return "skip"
-    real_import = builtins.__import__
-
-    def guarded(name, *args, **kwargs):
-        if name == "ollama" or name.startswith("ollama."):
-            raise ImportError("simulated: ollama python package not installed")
-        return real_import(name, *args, **kwargs)
-
-    # Build the failing-helper, install it on builtins.__import__, and
-    # pin Branch 2 of the test with try/finally so the guard never leaks
-    # into the next test in the suite. The outer try/finally covers BOTH
-    # Branch 1 (which doesn't need the guard) and Branch 2 (which does),
-    # so a future failure between the two branches can't poison the
-    # remaining tests.
-    real_import = builtins.__import__
-
-    def guarded(name, *args, **kwargs):
-        if name == "ollama" or name.startswith("ollama."):
-            raise ImportError("simulated: ollama python package not installed")
-        return real_import(name, *args, **kwargs)
 
     importlib_app = _load("ai_agency.app", _AGENCY_PKG / "app.py")
     client = _logged_in_client(importlib_app)
 
-    builtins.__import__ = guarded
-    try:
-        # Branch 1: non-JSON Content-Type header -> 415 from the JSON-CT hook.
-        # We send an EXPLICIT form-urlencoded body so request.headers
-        # reports Content-Type="application/x-www-form-urlencoded" rather
-        # than empty (which would let the request bypass the middleware).
-        r = client.post(
-            "/api/settings/test-llm",
-            data="x=y",
-            content_type="application/x-www-form-urlencoded",
-        )
-        assert r.status_code == 415, (
-            f"expected 415 for non-JSON Content-Type, got {r.status_code} {r.get_data(as_text=True)!r}"
-        )
-        j = r.get_json() or {}
-        assert j.get("error") == "content_type_must_be_application_json", j
+    # Branch 1: non-JSON Content-Type header -> 415 from the JSON-CT hook.
+    # We send an EXPLICIT form-urlencoded body so request.headers
+    # reports Content-Type="application/x-www-form-urlencoded" rather
+    # than empty (which would let the request bypass the middleware).
+    r = client.post(
+        "/api/settings/test-llm",
+        data="x=y",
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert r.status_code == 415, (
+        f"expected 415 for non-JSON Content-Type, got {r.status_code} {r.get_data(as_text=True)!r}"
+    )
+    j = r.get_json() or {}
+    assert j.get("error") == "content_type_must_be_application_json", j
 
-        # Branch 2: with proper Content-Type + ollama guard raised -> 500 with hint.
-        r = client.post(
-            "/api/settings/test-llm", headers={"Content-Type": "application/json"}
-        )
-        assert r.status_code == 500, (
-            f"expected 500 when ollama missing, got {r.status_code} {r.get_data(as_text=True)!r}"
-        )
-        j = r.get_json() or {}
-        err = j.get("error", "")
-        assert "pip install ollama" in err or "ollama" in err, (
-            f"expected ollama-related error, got {err!r}"
-        )
-        assert j.get("ok") is False
-    finally:
-        builtins.__import__ = real_import
+    # Branch 2: proper Content-Type, no groq_api_key configured -> 422.
+    r = client.post(
+        "/api/settings/test-llm", headers={"Content-Type": "application/json"}
+    )
+    assert r.status_code == 422, (
+        f"expected 422 when groq_api_key unset, got {r.status_code} {r.get_data(as_text=True)!r}"
+    )
+    j = r.get_json() or {}
+    err = j.get("error", "")
+    assert "groq_api_key" in err, f"expected groq_api_key-related error, got {err!r}"
+    assert j.get("ok") is False
 
 
 # ── Run ───────────────────────────────────────────────────────────────────
 
 def test_track_open_route_marks_bot_ua() -> None:
-    """End-to-end: GET /t/o/<id>.gif stamps is_bot=1 on Proofpoint UA, 0 on Thunderbird UA.
+    """End-to-end: GET /t/o/<workspace_id>/<id>.gif stamps is_bot=1 on Proofpoint UA, 0 on Thunderbird UA.
 
     Wiring-level coverage that the unit-level record_open tests cannot
     provide: route registration, header extraction, settings read, and
@@ -1066,7 +1027,7 @@ def test_track_open_route_marks_bot_ua() -> None:
             "Sophos", "IronPort", "FireEye",
         ],
     })
-    config.load_settings.cache_clear()
+    config.invalidate_settings()
 
     new_tracking = "tkeroute" + uuid.uuid4().hex[:12]
     row_id = uuid.uuid4().hex
@@ -1083,7 +1044,7 @@ def test_track_open_route_marks_bot_ua() -> None:
 
     app_mod = _load("ai_agency.app", _AGENCY_PKG / "app.py")
     client = app_mod.app.test_client()
-    pixel = "/t/o/" + new_tracking + ".gif"
+    pixel = f"/t/o/{_SMOKE_WORKSPACE_ID['value']}/{new_tracking}.gif"
 
     def assert_gif(resp, *, label):
         assert resp.status_code == 200, (
@@ -1148,11 +1109,11 @@ def test_track_open_route_marks_bot_ua() -> None:
     # 5) Unknown tracking_id still serves the GIF (200 + magic bytes) so
     #    scanner retries can't be provoked by a 4xx \u2014 important for
     #    sender reputation. Also: the route is GET-only; a POST gets 405.
-    miss = client.get("/t/o/definitely-no-such-token.gif")
+    miss = client.get(f"/t/o/{_SMOKE_WORKSPACE_ID['value']}/definitely-no-such-token.gif")
     assert_gif(miss, label="unknown-tracking-id")
     post_resp = client.post(pixel)
     assert post_resp.status_code == 405, (
-        f"POST /t/o/<id>.gif must be 405 (route is GET-only), "
+        f"POST /t/o/<ws>/<id>.gif must be 405 (route is GET-only), "
         f"got {post_resp.status_code}"
     )
 
@@ -1160,7 +1121,7 @@ def test_track_open_route_marks_bot_ua() -> None:
 _R = Results()
 _TEST_FNS = [
     ("init_schema: 12 expected tables",                         test_init_schema),
-    ("settings seeds apis.ollama_model='llama3'",                test_settings_seed_ollama_model),
+    ("settings seeds apis.groq_model default",                  test_settings_seed_groq_defaults),
     ("insert a client",                                         test_create_client),
     ("UNIQUE(client_id, external_id) blocks duplicate prospects", test_prospect_dedupe),
     ("subject_templates vary randomly across renders",           test_subject_templates_vary_randomly),
@@ -1175,8 +1136,8 @@ _TEST_FNS = [
     ("sender skips pixel when tracking disabled",               test_sender_does_not_embed_tracking_when_disabled),
     ("GET /api/stats/open-rate returns breakdown",             test_stats_open_rate_endpoint_returns_breakdown),
     ("GET /healthz returns 200 ok",                             test_route_healthz_returns_200),
-    ("POST /api/* pins both 415 (no CT) and 500 (ollama guard)",     test_route_test_llm_pins_content_type_and_ollama_guard),
-     ("GET /t/o/<id>.gif stamps is_bot=1 for Proofpoint UA, 0 otherwise", test_track_open_route_marks_bot_ua),
+    ("POST /api/* pins both 415 (no CT) and 422 (groq key guard)",   test_route_test_llm_pins_content_type_and_groq_guard),
+     ("GET /t/o/<ws>/<id>.gif stamps is_bot=1 for Proofpoint UA, 0 otherwise", test_track_open_route_marks_bot_ua),
 ]
 
 
@@ -1189,7 +1150,6 @@ def main() -> int:
     print("=" * 64)
     for name, fn in _TEST_FNS:
         _R.run(name, fn)
-    _restore_auth_is_authed()
     print()
     msg = f"  {_R.passed}/{total} passed"
     if _R.skipped:

@@ -1,0 +1,74 @@
+======================================================================
+                  AI AGENCY STRATEGIC CORE BUNDLE
+======================================================================
+
+1. PERFORMANCE PITCH DECK OUTLINE
+--------------------------------------------------------------
+Slide 1: Title: The Shift to Localized Agentic B2B Outreach.
+Slide 2: The Core Conflict: Centralized bulk marketing lists now get
+         instantly blocked by modern email servers.
+Slide 3: The Mechanical Edge: Local open-source models (Llama 3)
+         research target targets with precision, mimicking human logic.
+Slide 4: Zero Risk Framework: No arbitrary monthly retainer fees.
+         You pay strictly for verified, high-intent positive replies.
+Slide 5: Immediate Scale: The 10-lead test campaign implementation.
+
+2. ONE-PAGE PERFORMANCE OUTCOME CONTRACT AGREEMENT
+--------------------------------------------------------------
+This Operational Engagement Agreement is bound between [Provider Name]
+and [Client Business Name].
+- Core Mandate: Provider will design, implement, and maintain private 
+  AI routing engines to generate warm pipeline responses.
+- Billing Metric: Client agrees to remit exactly $150 CAD per confirmed 
+  Positive Lead Outcome forwarded by the system.
+- Settlement Terms: Billing compiled every Friday via metrics script. 
+  Invoices clear on 7-day terms. 
+- Lead Protection Policy: Verification disputes on lead intent flags 
+  must be logged within 48 business hours of transfer.
+- System Terms: Either party holds the complete operational freedom 
+  to dissolve this agreement with a clear 24-hour notification.
+- Jurisdiction: Governed strictly by the laws of Saskatchewan.
+
+3. COLD SYSTEM PROMPT PROTOCOL
+--------------------------------------------------------------
+"Context: Target lead profile is {{Company}}. System Event Trigger:
+They recently posted news regarding {{News}}. Task: Author an email 
+opening hook connecting this event directly to our solution value proposition 
+({{Benefit}}). Rule constraint: Total word length must not exceed 15 words."
+
+4. THE WARM CALL "CONVERSION" PHONE SCRIPT
+--------------------------------------------------------------
+"Hello [First Name], this is [Client Name] over at [Client Company]. 
+I noticed your explicit reply to the audit notes I routed your team 
+regarding {{AI_Observation_Topic}} — glad to see those insights aligned! 
+
+I don't want to burn your afternoon schedule right now, but we've 
+unlocked interesting results handling exactly that situation for 
+similar teams. Do you have a tight 15-minute slot available this 
+coming Thursday or Friday for a non-sales execution brainstorm? 
+Let's look at what the structural engine map looks like for your setup."
+
+5. 30-DAY RATE ADJUSTMENT & VALUE RETENTION EMAIL
+--------------------------------------------------------------
+Subject: 30-Day Operational Review: [Client Company] Metrics
+
+"Hi [Client Name],
+
+We have crossed our first 30-day production benchmark on our 
+performance outreach model. Reviewing our shared system ledger, 
+the local engine successfully delivered [Number] verified warm 
+outcomes, creating [Number] high-priority discovery pipeline calls.
+
+Now that our local training prompts are dialed in and the domain 
+reputations are stable, I am prepared to scale outreach limits. 
+To accommodate the raw server cycles and deep execution logic overhead, 
+my standard delivery cost will move to $175 per warm lead outcome 
+starting next week.
+
+This adjustment preserves our standard of highly tailored lead data 
+as we expand your reach. Are you comfortable keeping system pipelines 
+scaled at these updated parameters?
+
+Best regards,
+[Your Name]"
+======================================================================

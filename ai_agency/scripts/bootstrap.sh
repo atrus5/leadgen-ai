@@ -59,17 +59,22 @@ echo "→ installing requirements"
 pip install --upgrade pip >/dev/null
 pip install -r "$PROJECT_ROOT/requirements.txt"
 
-# 3) init schema (idempotent)
-# Run from PACKAGE_PARENT so `from ai_agency import db, config` resolves
+# 3) init platform.db (idempotent). Per-workspace agency.db files are
+# initialised lazily on first touch (see db.py) — there's no "the"
+# database anymore to eagerly create here.
+# Run from PACKAGE_PARENT so `from ai_agency import platform_db` resolves
 # correctly because `ai_agency/` is then a top-level package on the cwd.
-echo "→ initialising sqlite schema"
+echo "→ initialising platform database"
 cd "$PACKAGE_PARENT"
 PYTHONPATH="$PACKAGE_PARENT" python - <<'PY'
-from ai_agency import db, config
-db.init_schema()
-db.ensure_default_settings()
-config.write_default_settings_file()
-print("✓ db ready at", db.DB_PATH)
+from ai_agency import platform_db
+platform_db.init_schema()
+platform_db.ensure_default_platform_settings()
+print("✓ platform db ready at", platform_db.DB_PATH)
+print("  If this is a fresh install, create your admin account with:")
+print("    python -m ai_agency.scripts.create_admin --email you@example.com")
+print("  If migrating an existing single-tenant install, instead run:")
+print("    python -m ai_agency.scripts.migrate_to_workspace")
 PY
 
 # 4) start

@@ -1,5 +1,5 @@
 """
-APScheduler wiring for four background jobs:
+APScheduler wiring for four background jobs, run per-workspace:
 
   1. nightly_hunt      - every night, run Apollo + Google Places for each
                          active client and persist new prospects
@@ -10,9 +10,21 @@ APScheduler wiring for four background jobs:
   4. warmup_tick        - once per day, increment the per-from daily send
                          counter and mark warmups complete at day 14
 
+All four job BODIES are unchanged from the single-tenant version — they
+only ever call db.get_db()/config.load_settings() with zero args, so they
+already work correctly per-workspace once db.use_workspace() has been set.
+What changed is install(): instead of registering one fixed-schedule cron
+job per job type, it registers four small "sweep" jobs that loop every
+active workspace, activate it, and check THAT workspace's own
+scheduler/hour settings before calling the (unchanged) job function. This
+avoids having to dynamically add/remove N per-workspace cron entries as
+workspaces come and go.
+
 All jobs use `job_runs` for restart-safety: each scheduled tick writes a row
 before doing work, and queries `job_runs` to avoid double-firing if the
-process was restarted within the same window.
+process was restarted within the same window. Since job_runs lives in each
+workspace's own SQLite file, this idempotency check is automatically
+per-workspace too.
 """
 from __future__ import annotations
 
@@ -24,7 +36,7 @@ from typing import Any
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 
-from .. import config, db
+from .. import config, db, platform_db
 from ..hunters import apollo, google_places
 from ..outreach import forwarder, reply_parser, sender
 
@@ -289,46 +301,98 @@ def _day_index(start_iso: str) -> int:
     return max(1, (datetime.now(timezone.utc) - start).days + 1)
 
 
+# ── Sweeps: loop every active workspace, run its unchanged job body ──────
+#
+# There's no more global "scheduler.enabled" — that's a per-workspace
+# setting now, checked inside each sweep. The sweep jobs themselves always
+# run; they're just cheap no-ops for any workspace that hasn't opted in or
+# whose configured hour doesn't match right now.
+
+def _sweep_nightly_hunt(_: datetime | None = None) -> None:
+    for ws in platform_db.list_active_workspaces():
+        db.use_workspace(ws["id"])
+        s = config.load_settings().get("scheduler", {}) or {}
+        s_agent = config.load_settings().get("agent", {}) or {}
+        if not (s.get("enabled") and s.get("run_nightly_hunt")):
+            continue
+        if datetime.now(timezone.utc).hour != int(s_agent.get("nightly_hunt_hour") or 2):
+            continue
+        try:
+            nightly_hunt()
+        except Exception:
+            LOG.exception("nightly_hunt failed for workspace %s", ws["id"])
+
+
+def _sweep_morning_brief(_: datetime | None = None) -> None:
+    for ws in platform_db.list_active_workspaces():
+        db.use_workspace(ws["id"])
+        s = config.load_settings().get("scheduler", {}) or {}
+        s_agent = config.load_settings().get("agent", {}) or {}
+        if not (s.get("enabled") and s.get("run_morning_brief")):
+            continue
+        if datetime.now(timezone.utc).hour != int(s_agent.get("morning_brief_hour") or 8):
+            continue
+        try:
+            morning_brief()
+        except Exception:
+            LOG.exception("morning_brief failed for workspace %s", ws["id"])
+
+
+def _sweep_reply_poller(_: datetime | None = None) -> None:
+    for ws in platform_db.list_active_workspaces():
+        db.use_workspace(ws["id"])
+        s = config.load_settings().get("scheduler", {}) or {}
+        if not (s.get("enabled") and s.get("run_reply_poller")):
+            continue
+        try:
+            reply_poller()
+        except Exception:
+            LOG.exception("reply_poller failed for workspace %s", ws["id"])
+
+
+def _sweep_warmup_tick(_: datetime | None = None) -> None:
+    for ws in platform_db.list_active_workspaces():
+        db.use_workspace(ws["id"])
+        s = config.load_settings().get("scheduler", {}) or {}
+        if not s.get("enabled"):
+            continue
+        try:
+            warmup_tick()
+        except Exception:
+            LOG.exception("warmup_tick failed for workspace %s", ws["id"])
+
+
 # ── Boot / shutdown ──────────────────────────────────────────────────────
 
 def install() -> BackgroundScheduler:
-    """Start the scheduler. Idempotent and restart-safe."""
+    """Start the scheduler. Idempotent and restart-safe. Registers four
+    sweep jobs (one per job type) rather than per-workspace cron entries —
+    see module docstring."""
     global _scheduler
     if _scheduler is not None:
         return _scheduler
 
-    s = config.load_settings().get("scheduler", {}) or {}
-    s_agent = config.load_settings().get("agent", {}) or {}
-    if not s.get("enabled"):
-        LOG.info("scheduler disabled in settings")
-        _scheduler = BackgroundScheduler(daemon=True)
-        _scheduler.start()
-        return _scheduler
-
     sched = BackgroundScheduler(daemon=True)
-    if s.get("run_nightly_hunt"):
-        sched.add_job(
-            nightly_hunt, "cron",
-            hour=int(s_agent.get("nightly_hunt_hour") or 2),
-            minute=10,
-            id="nightly_hunt", replace_existing=True, misfire_grace_time=600,
-        )
-    if s.get("run_morning_brief"):
-        sched.add_job(
-            morning_brief, "cron",
-            hour=int(s_agent.get("morning_brief_hour") or 8),
-            minute=5,
-            id="morning_brief", replace_existing=True, misfire_grace_time=600,
-        )
-    if s.get("run_reply_poller"):
-        sched.add_job(
-            reply_poller, "interval", minutes=15,
-            id="reply_poller", replace_existing=True, misfire_grace_time=300,
-        )
+    # max_instances=1 on every sweep: each sweep is a single synchronous
+    # loop over workspaces on one thread, so overlap between two ticks of
+    # the SAME sweep (e.g. a slow reply_poller tick still running when the
+    # next 15-min tick fires) can never interleave db.use_workspace() calls
+    # from two different loop iterations.
     sched.add_job(
-        warmup_tick, "cron",
-        hour=23, minute=50,
-        id="warmup_tick", replace_existing=True, misfire_grace_time=600,
+        _sweep_nightly_hunt, "cron", minute=10,
+        id="sweep_nightly_hunt", replace_existing=True, misfire_grace_time=600, max_instances=1,
+    )
+    sched.add_job(
+        _sweep_morning_brief, "cron", minute=5,
+        id="sweep_morning_brief", replace_existing=True, misfire_grace_time=600, max_instances=1,
+    )
+    sched.add_job(
+        _sweep_reply_poller, "interval", minutes=15,
+        id="sweep_reply_poller", replace_existing=True, misfire_grace_time=300, max_instances=1,
+    )
+    sched.add_job(
+        _sweep_warmup_tick, "cron", hour=23, minute=50,
+        id="sweep_warmup_tick", replace_existing=True, misfire_grace_time=600, max_instances=1,
     )
 
     def _log_event(event):
@@ -338,7 +402,7 @@ def install() -> BackgroundScheduler:
     sched.add_listener(_log_event, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
     sched.start()
     _scheduler = sched
-    LOG.info("scheduler installed")
+    LOG.info("scheduler installed (workspace sweeps)")
     return sched
 
 

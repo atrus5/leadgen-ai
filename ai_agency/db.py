@@ -1,8 +1,15 @@
 """
 SQLite schema + helpers for the LeadGen AI agency system.
 
-Storage replaces the prior CSV/Supabase approach. Single database file at
-`data/agency.db`. WAL enabled for concurrent read while writing.
+One SQLite file PER WORKSPACE (tenant) at `data/workspaces/<id>/agency.db`.
+WAL enabled for concurrent read while writing. Every table below is
+implicitly scoped to "whichever workspace is current for this thread" —
+callers never pass a workspace_id to any of these functions; instead,
+`db.use_workspace(workspace_id)` is called once at the top of each Flask
+request (see app.py's before_request) or once per iteration of a scheduler
+sweep (see scheduler/jobs.py), and every function in this module resolves
+against that. See platform_db.py for the separate, genuinely-singleton
+database holding workspaces/users/invites/platform admins.
 
 Tables:
   settings           - key/value JSON store (singleton row per key)
@@ -33,9 +40,15 @@ from typing import Any, Iterable
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-DB_PATH = DATA_DIR / "agency.db"
+WORKSPACES_DIR = DATA_DIR / "workspaces"
+# Pre-multi-tenant single DB path. Only referenced by
+# scripts/migrate_to_workspace.py to find + move an existing install's data
+# — nothing else should read or write this path anymore.
+LEGACY_DB_PATH = DATA_DIR / "agency.db"
 
 _LOCAL = threading.local()
+_initialized_workspaces: set[str] = set()
+_init_lock = threading.Lock()
 
 
 SCHEMA = """
@@ -253,8 +266,14 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def _connect() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH, timeout=30, isolation_level=None)
+def _workspace_db_path(workspace_id: str) -> Path:
+    d = WORKSPACES_DIR / workspace_id
+    d.mkdir(parents=True, exist_ok=True)
+    return d / "agency.db"
+
+
+def _connect(path: Path) -> sqlite3.Connection:
+    conn = sqlite3.connect(path, timeout=30, isolation_level=None)
     conn.row_factory = sqlite3.Row
     # These pragmas are important for every connection, not just the
     # very first one that ran executescript — WAL in particular won't
@@ -265,13 +284,54 @@ def _connect() -> sqlite3.Connection:
     return conn
 
 
+def use_workspace(workspace_id: str) -> None:
+    """Set which workspace's database this thread's subsequent get_db()
+    calls resolve to. Called once at the top of each Flask request (see
+    app.py's before_request) or once per scheduler-sweep iteration (see
+    scheduler/jobs.py) — never by the business-logic modules themselves."""
+    _LOCAL.workspace_id = workspace_id
+
+
+def current_workspace() -> str | None:
+    return getattr(_LOCAL, "workspace_id", None)
+
+
 def get_db() -> sqlite3.Connection:
-    """Thread-local cached connection."""
-    conn = getattr(_LOCAL, "conn", None)
+    """Connection for the current thread's current workspace. Connections
+    are cached per (thread, workspace) so switching workspaces mid-thread
+    (e.g. the scheduler sweeping many tenants) doesn't reopen a file it's
+    already touched this process."""
+    ws = current_workspace()
+    if ws is None:
+        raise RuntimeError(
+            "db.use_workspace(workspace_id) must be called before db.get_db() "
+            "— there is no implicit global database anymore."
+        )
+    conns: dict[str, sqlite3.Connection] = getattr(_LOCAL, "conns", None)
+    if conns is None:
+        conns = {}
+        _LOCAL.conns = conns
+    conn = conns.get(ws)
     if conn is None:
-        conn = _connect()
-        _LOCAL.conn = conn
+        conn = _connect(_workspace_db_path(ws))
+        conns[ws] = conn
+        _ensure_initialized(ws, conn)
     return conn
+
+
+def _ensure_initialized(workspace_id: str, conn: sqlite3.Connection) -> None:
+    """Run schema creation + default settings once per workspace per
+    process. Cheap (executescript is idempotent) but memoized anyway since
+    it runs on every first touch of a workspace on every thread."""
+    if workspace_id in _initialized_workspaces:
+        return
+    with _init_lock:
+        if workspace_id in _initialized_workspaces:
+            return
+        conn.executescript(SCHEMA)
+        _migrate(conn)
+        _initialized_workspaces.add(workspace_id)
+    ensure_default_settings()
 
 
 @contextmanager
@@ -288,7 +348,9 @@ def transaction():
 
 
 def init_schema() -> None:
-    """Create tables + apply column migrations. Safe to call repeatedly."""
+    """Create tables + apply column migrations for the CURRENT workspace.
+    Safe to call repeatedly — get_db() already does this lazily on first
+    touch, so this is mostly useful for scripts that want to be explicit."""
     db = get_db()
     db.executescript(SCHEMA)
     _migrate(db)
@@ -537,7 +599,8 @@ DEFAULT_SETTINGS = {
         "google_places_use": True,
         "hunter_api_key": "",
         "hunter_use": False,
-        "ollama_model": "llama3",
+        "groq_api_key": "",
+        "groq_model": "llama-3.3-70b-versatile",
     },
     "tracking": {
         # When enabled, every outbound email embeds a 1x1 tracking GIF at

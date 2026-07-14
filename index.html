@@ -4,52 +4,100 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#07090d">
+<meta name="theme-color" content="#12161d">
 <title>LeadGen AI — Email Business System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+// Set the theme attribute before first paint so there's no flash of the
+// wrong theme. Persisted choice wins; otherwise fall back to OS preference.
+(function(){
+  var saved=localStorage.getItem('lgs5-theme');
+  var theme=saved||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+  document.documentElement.setAttribute('data-theme',theme);
+})();
+</script>
 <style>
-:root {
-  --bg:#07090d;--surface:#0e1219;--card:#131a24;--card2:#18212e;
-  --border:#1e2d40;--border2:#253549;
-  --accent:#3b9eff;--accent-dim:rgba(59,158,255,.12);--accent-border:rgba(59,158,255,.22);
-  --green:#22d472;--green-dim:rgba(34,212,114,.1);--green-border:rgba(34,212,114,.22);
-  --orange:#ff8c42;--orange-dim:rgba(255,140,66,.1);
-  --red:#ff4f6a;--red-dim:rgba(255,79,106,.1);
-  --yellow:#ffc83d;--yellow-dim:rgba(255,200,61,.1);
-  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.1);
-  --text:#dde6f0;--text2:#7a8fa8;--text3:#3d5068;
-  --r:10px;--r-sm:6px;
+:root,:root[data-theme="dark"] {
+  /* Lightened dark theme — brighter panels + much higher-contrast muted text
+     than the original near-black palette so labels stay legible. */
+  --bg:#12161d;--surface:#181e27;--card:#212a36;--card2:#28323f;
+  --border:#33404f;--border2:#425064;
+  --accent:#4da6ff;--accent-dim:rgba(77,166,255,.16);--accent-border:rgba(77,166,255,.32);
+  --green:#2ee082;--green-dim:rgba(46,224,130,.14);--green-border:rgba(46,224,130,.3);
+  --orange:#ffa15c;--orange-dim:rgba(255,161,92,.14);
+  --red:#ff6b82;--red-dim:rgba(255,107,130,.14);
+  --yellow:#ffd166;--yellow-dim:rgba(255,209,102,.14);
+  --purple:#c0adfc;--purple-dim:rgba(192,173,252,.14);
+  --text:#f3f7fb;--text2:#b0c1d3;--text3:#8598ac;
+  --r:12px;--r-sm:7px;
   --bnav:64px;--safe:env(safe-area-inset-bottom,0px);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.28);
+  --shadow-md:0 8px 24px rgba(0,0,0,.36);
+  --shadow-lg:0 -24px 64px rgba(0,0,0,.55);
+  /* Signature: the product's own lifecycle — a cold prospect warms into a
+     hot reply — rendered as a literal cold→hot gradient, used sparingly
+     for wayfinding (brand mark, sidebar rail) rather than decoration. */
+  --temp-grad:linear-gradient(135deg,#4da6ff 0%,#ffa15c 58%,#ff6b82 100%);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+:root[data-theme="light"] {
+  --bg:#f5f7fa;--surface:#ffffff;--card:#ffffff;--card2:#eef1f6;
+  --border:#dde3ea;--border2:#c8d1db;
+  --accent:#2f7fe0;--accent-dim:rgba(47,127,224,.1);--accent-border:rgba(47,127,224,.28);
+  --green:#189260;--green-dim:rgba(24,146,96,.1);--green-border:rgba(24,146,96,.28);
+  --orange:#c96a12;--orange-dim:rgba(201,106,18,.1);
+  --red:#d8324e;--red-dim:rgba(216,50,78,.1);
+  --yellow:#a87608;--yellow-dim:rgba(168,118,8,.1);
+  --purple:#7c5cdb;--purple-dim:rgba(124,92,219,.1);
+  --text:#182230;--text2:#4f6070;--text3:#71829a;
+  --r:12px;--r-sm:7px;
+  --bnav:64px;--safe:env(safe-area-inset-bottom,0px);
+  --shadow-sm:0 2px 8px rgba(30,41,59,.07);
+  --shadow-md:0 8px 24px rgba(30,41,59,.1);
+  --shadow-lg:0 -24px 64px rgba(30,41,59,.18);
+  --temp-grad:linear-gradient(135deg,#2f7fe0 0%,#c96a12 58%,#d8324e 100%);
+  --ease:cubic-bezier(.2,.8,.2,1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:18px}
 html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;font-size:1.0625rem;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .15s,color .15s}
+::selection{background:var(--accent);color:#fff}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.theme-toggle{position:fixed;top:14px;right:16px;z-index:10000;width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--border2);color:var(--text);font-size:1.05rem;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);transition:all .15s var(--ease)}
+.theme-toggle:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow-md)}
 
 /* ── LAYOUT ── */
 .app{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
-.logo-wrap{padding:22px 20px 16px;border-bottom:1px solid var(--border)}
-.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:var(--accent)}
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0;position:relative}
+.sidebar::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--temp-grad)}
+.logo-wrap{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.logo-mark{width:26px;height:26px;border-radius:8px;background:var(--temp-grad);flex-shrink:0;position:relative;box-shadow:var(--shadow-sm)}
+.logo-mark::after{content:'';position:absolute;inset:6px;background:var(--surface);border-radius:4px}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--text);letter-spacing:-.01em;white-space:nowrap}
 .logo-sub{font-family:'Syne Mono',monospace;font-size:.56rem;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
 .snav{padding:12px 10px;flex:1}
 .nsec{font-family:'Syne Mono',monospace;font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);padding:10px 10px 4px}
-.ni{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--r-sm);cursor:pointer;color:var(--text2);font-size:.86rem;font-weight:500;transition:all .15s;margin-bottom:1px;user-select:none;position:relative}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--r-sm);cursor:pointer;color:var(--text2);font-size:.86rem;font-weight:500;transition:all .15s var(--ease);margin-bottom:1px;user-select:none;position:relative}
 .ni:hover{background:var(--card);color:var(--text)}
-.ni.active{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border)}
+.ni.active{background:var(--accent-dim);color:var(--accent);font-weight:600}
+.ni.active::before{content:'';position:absolute;left:-10px;top:4px;bottom:4px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.ni-num{font-family:'Syne Mono',monospace;font-size:.62rem;font-weight:700;color:var(--text3);width:13px;text-align:center;flex-shrink:0}
+.ni.active .ni-num{color:var(--accent)}
 .ni-icon{font-size:.9rem;width:16px;text-align:center;flex-shrink:0}
-.ni-badge{margin-left:auto;background:var(--accent);color:var(--bg);font-family:'Syne Mono',monospace;font-size:.56rem;font-weight:700;padding:2px 5px;border-radius:100px;min-width:16px;text-align:center}
+.ni-badge{margin-left:auto;background:var(--accent);color:#fff;font-family:'Syne Mono',monospace;font-size:.56rem;font-weight:700;padding:2px 5px;border-radius:100px;min-width:16px;text-align:center;font-variant-numeric:tabular-nums}
 .ni-badge.red{background:var(--red)}
 .smrr{padding:14px 16px;border-top:1px solid var(--border)}
 .smrr-label{font-size:.7rem;color:var(--text3);margin-bottom:3px}
-.smrr-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--green);line-height:1;margin-bottom:7px}
+.smrr-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--green);line-height:1;margin-bottom:7px;font-variant-numeric:tabular-nums}
 .pt{background:var(--border);border-radius:100px;height:4px;overflow:hidden}
-.pf{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--green),var(--accent));transition:width .5s ease}
+.pf{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--green),var(--accent));transition:width .5s var(--ease)}
 .smrr-goal{font-size:.68rem;color:var(--text3);margin-top:4px}
 
 /* ── MAIN ── */
 .main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;box-shadow:var(--shadow-sm)}
 .tb-left{min-width:0}
 .tb-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.02rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-sub{font-size:.73rem;color:var(--text2)}
@@ -65,7 +113,7 @@ body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;fon
 .bni-badge{position:absolute;top:5px;right:calc(50% - 18px);background:var(--red);color:#fff;font-family:'Syne Mono',monospace;font-size:.5rem;font-weight:700;padding:1px 4px;border-radius:100px;min-width:14px;text-align:center}
 
 /* ── FAB ── */
-.fab{position:fixed;bottom:calc(var(--bnav) + var(--safe) + 14px);right:16px;width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;font-size:1.4rem;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(59,158,255,.4);border:none;z-index:90;transition:transform .15s}
+.fab{position:fixed;bottom:calc(var(--bnav) + var(--safe) + 14px);right:16px;width:50px;height:50px;border-radius:50%;background:var(--temp-grad);color:#fff;font-size:1.4rem;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-md);border:none;z-index:90;transition:transform .15s var(--ease)}
 .fab:active{transform:scale(.95)}
 
 /* ── PAGES ── */
@@ -73,9 +121,10 @@ body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;fon
 .page.active{display:block}
 
 /* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--r-sm);font-family:'Figtree',sans-serif;font-size:.81rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;text-decoration:none}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--r-sm);font-family:'Figtree',sans-serif;font-size:.81rem;font-weight:600;cursor:pointer;border:none;transition:all .15s var(--ease);white-space:nowrap;text-decoration:none}
+.btn:active{transform:scale(.97)}
 .btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
 .btn-ghost:hover{background:var(--card);color:var(--text)}
 .btn-success{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border)}
@@ -89,26 +138,27 @@ body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;fon
 /* ── STATS ── */
 .sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px}
 .sgrid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}
-.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;position:relative;overflow:hidden}
-.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;position:relative;overflow:hidden;transition:transform .15s var(--ease),box-shadow .15s var(--ease)}
+.sc:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .sc.bl::before{background:linear-gradient(90deg,var(--accent),transparent)}
 .sc.gr::before{background:linear-gradient(90deg,var(--green),transparent)}
 .sc.or::before{background:linear-gradient(90deg,var(--orange),transparent)}
 .sc.ye::before{background:linear-gradient(90deg,var(--yellow),transparent)}
 .sc.pu::before{background:linear-gradient(90deg,var(--purple),transparent)}
 .sc.rd::before{background:linear-gradient(90deg,var(--red),transparent)}
-.sv{font-family:'Syne',sans-serif;font-weight:800;font-size:1.65rem;line-height:1;margin-bottom:3px}
+.sv{font-family:'Syne',sans-serif;font-weight:800;font-size:1.65rem;line-height:1;margin-bottom:3px;font-variant-numeric:tabular-nums}
 .sc.bl .sv{color:var(--accent)}.sc.gr .sv{color:var(--green)}.sc.or .sv{color:var(--orange)}.sc.ye .sv{color:var(--yellow)}.sc.pu .sv{color:var(--purple)}.sc.rd .sv{color:var(--red)}
 .sl{font-size:.72rem;color:var(--text2)}
 
 /* ── SECTION ── */
 .sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;margin-top:18px}
-.sec-t{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem}
+.sec-t{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:-.005em}
 
 /* ── CARDS ── */
 .clist{display:flex;flex-direction:column;gap:7px}
-.ic{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;transition:border-color .15s}
-.ic:hover{border-color:var(--border2)}
+.ic{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;transition:all .15s var(--ease)}
+.ic:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
 .ic-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
 .ic-name{font-weight:600;font-size:.9rem;color:var(--text)}
 .ic-meta{font-size:.76rem;color:var(--text2);margin-top:2px}
@@ -140,7 +190,7 @@ body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;fon
 /* ── MODALS ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
 .modal-overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 -20px 60px rgba(0,0,0,.6);animation:slideUp .25s ease}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:slideUp .25s var(--ease)}
 @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 .mhandle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:10px auto 0}
 .mhdr{padding:13px 17px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
@@ -152,8 +202,8 @@ body{background:var(--bg);color:var(--text);font-family:'Figtree',sans-serif;fon
 /* ── FORMS ── */
 .fg{margin-bottom:12px}
 .fl{font-size:.74rem;font-weight:600;color:var(--text2);margin-bottom:4px;display:block}
-.fi,.fs,.fta{width:100%;background:var(--card);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 11px;color:var(--text);font-family:'Figtree',sans-serif;font-size:.86rem;outline:none;transition:border-color .15s;-webkit-appearance:none}
-.fi:focus,.fs:focus,.fta:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.fi,.fs,.fta{width:100%;background:var(--card);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 11px;color:var(--text);font-family:'Figtree',sans-serif;font-size:.86rem;outline:none;transition:border-color .15s var(--ease),box-shadow .15s var(--ease);-webkit-appearance:none}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
 .fs option{background:var(--surface)}
 .fta{resize:vertical;min-height:75px;line-height:1.6}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -247,7 +297,7 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
 .goal-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 15px;margin-bottom:8px}
 .goal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .goal-name{font-weight:600;font-size:.88rem;color:var(--text)}
-.goal-val{font-family:'Syne Mono',monospace;font-size:.75rem}
+.goal-val{font-family:'Syne Mono',monospace;font-size:.75rem;font-variant-numeric:tabular-nums}
 .goal-bar{height:6px;background:var(--border);border-radius:100px;overflow:hidden}
 .goal-fill{height:100%;border-radius:100px;transition:width .4s ease}
 
@@ -266,9 +316,10 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
 .report-section h4{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin-bottom:8px;color:var(--text)}
 
 /* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
 
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
@@ -295,39 +346,50 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
 </style>
 </head>
 <body>
+<button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" title="Switch light / dark theme">🌙</button>
 <div id="main-app" style="display:none;width:100%;height:100%">
 <div class="app">
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="logo-wrap"><div class="logo-text">LeadGen AI</div><div class="logo-sub">Email Business System</div></div>
+  <div class="logo-wrap"><div class="logo-mark"></div><div><div class="logo-text">LeadGen AI</div><div class="logo-sub">Email Business System</div></div></div>
   <nav class="snav">
-    <div class="nsec">Overview</div>
-    <div class="ni active" onclick="nav('today')"><span class="ni-icon">☀️</span>Today<span class="ni-badge" id="nb-today" style="display:none">0</span></div>
-    <div class="ni" onclick="nav('dashboard')"><span class="ni-icon">📊</span>Dashboard</div>
-    <div class="nsec">Acquisition</div>
-    <div class="ni" onclick="nav('finder')"><span class="ni-icon">🔍</span>Lead Finder</div>
-    <div class="ni" onclick="nav('prospects')"><span class="ni-icon">🎯</span>Prospects<span class="ni-badge" id="nb-prospects">0</span></div>
-    <div class="ni" onclick="nav('outreach')"><span class="ni-icon">✉️</span>Outreach</div>
-    <div class="nsec">Delivery</div>
-    <div class="ni" onclick="nav('clients')"><span class="ni-icon">🤝</span>Clients<span class="ni-badge" id="nb-clients">0</span></div>
-    <div class="ni" onclick="nav('warmup')"><span class="ni-icon">🔥</span>Warmup Tracker</div>
-    <div class="ni" onclick="nav('campaigns')"><span class="ni-icon">🚀</span>Campaigns</div>
-    <div class="ni" onclick="nav('reports')"><span class="ni-icon">📄</span>Monthly Reports</div>
-    <div class="nsec">Intelligence</div>
-    <div class="ni" onclick="nav('aireply')"><span class="ni-icon">🤖</span>AI Reply Analyzer</div>
-    <div class="ni" onclick="nav('subjectgen')"><span class="ni-icon">✍️</span>Subject Lines</div>
-    <div class="ni" onclick="nav('abtests')"><span class="ni-icon">🧪</span>A/B Tests</div>
-    <div class="ni" onclick="nav('niches')"><span class="ni-icon">📈</span>Niche Performance</div>
-    <div class="nsec">Operations</div>
-    <div class="ni" onclick="nav('scripts')"><span class="ni-icon">📝</span>Scripts</div>
-    <div class="ni" onclick="nav('templates')"><span class="ni-icon">💾</span>Templates</div>
-    <div class="ni" onclick="nav('invoices')"><span class="ni-icon">🧾</span>Invoices<span class="ni-badge red" id="nb-invoices" style="display:none">!</span></div>
-    <div class="ni" onclick="nav('referrals')"><span class="ni-icon">🌟</span>Referrals</div>
-    <div class="ni" onclick="nav('goals')"><span class="ni-icon">🏆</span>Goals</div>
-    <div class="nsec">Planning</div>
-    <div class="ni" onclick="nav('playbook')"><span class="ni-icon">📖</span>Client Playbook</div>
-    <div class="ni" onclick="nav('projections')"><span class="ni-icon">📐</span>Projections</div>
+    <div class="nsec">Overview · every day</div>
+    <div class="ni active" onclick="nav('today')" title="Your daily task list"><span class="ni-icon">☀️</span>Today<span class="ni-badge" id="nb-today" style="display:none">0</span></div>
+    <div class="ni" onclick="nav('dashboard')" title="Snapshot of every client and number"><span class="ni-icon">📊</span>Dashboard</div>
+
+    <div class="nsec">1 · Sign &amp; warm up</div>
+    <div class="ni" onclick="nav('clients')" title="Step 1: Sign a new agency client"><span class="ni-num">1</span><span class="ni-icon">🤝</span>Clients<span class="ni-badge" id="nb-clients">0</span></div>
+    <div class="ni" onclick="nav('warmup')" title="Step 2: Register a sending domain + mailboxes, then warm up for ~2 weeks before sending"><span class="ni-num">2</span><span class="ni-icon">🔥</span>Warmup Tracker</div>
+
+    <div class="nsec">2 · Find &amp; contact</div>
+    <div class="ni" onclick="nav('finder')" title="Step 3: Hunt new prospects for this client (Apollo + Google Places)"><span class="ni-num">3</span><span class="ni-icon">🔍</span>Lead Finder</div>
+    <div class="ni" onclick="nav('prospects')" title="Step 4: Review and manage the prospects you've found"><span class="ni-num">4</span><span class="ni-icon">🎯</span>Prospects<span class="ni-badge" id="nb-prospects">0</span></div>
+    <div class="ni" onclick="nav('outreach')" title="Step 5: Generate and send the cold email sequence"><span class="ni-num">5</span><span class="ni-icon">✉️</span>Outreach</div>
+
+    <div class="nsec">3 · Handle replies</div>
+    <div class="ni" onclick="nav('aireply')" title="Step 6: Read and classify incoming replies — Cold, Warm, or Hot"><span class="ni-num">6</span><span class="ni-icon">🤖</span>AI Reply Analyzer</div>
+    <div class="ni" onclick="nav('campaigns')" title="Step 7: Manage follow-up steps for prospects who haven't replied yet"><span class="ni-num">7</span><span class="ni-icon">🚀</span>Campaigns</div>
+
+    <div class="nsec">4 · Optimize</div>
+    <div class="ni" onclick="nav('subjectgen')" title="Step 8: Test and improve subject lines"><span class="ni-num">8</span><span class="ni-icon">✍️</span>Subject Lines</div>
+    <div class="ni" onclick="nav('abtests')" title="Step 9: Compare send variants to see what converts"><span class="ni-num">9</span><span class="ni-icon">🧪</span>A/B Tests</div>
+    <div class="ni" onclick="nav('niches')" title="Step 10: See which niches and cities convert best"><span class="ni-num">10</span><span class="ni-icon">📈</span>Niche Performance</div>
+
+    <div class="nsec">5 · Report &amp; grow</div>
+    <div class="ni" onclick="nav('reports')" title="Step 11: Send the client their monthly performance report"><span class="ni-num">11</span><span class="ni-icon">📄</span>Monthly Reports</div>
+    <div class="ni" onclick="nav('invoices')" title="Step 12: Bill the client for the retainer"><span class="ni-num">12</span><span class="ni-icon">🧾</span>Invoices<span class="ni-badge red" id="nb-invoices" style="display:none">!</span></div>
+    <div class="ni" onclick="nav('referrals')" title="Step 13: Turn happy clients into new referrals"><span class="ni-num">13</span><span class="ni-icon">🌟</span>Referrals</div>
+    <div class="ni" onclick="nav('goals')" title="Step 14: Track progress against your targets"><span class="ni-num">14</span><span class="ni-icon">🏆</span>Goals</div>
+    <div class="ni" onclick="nav('projections')" title="Step 15: Forecast revenue and growth"><span class="ni-num">15</span><span class="ni-icon">📐</span>Projections</div>
+
+    <div class="nsec">Reference · anytime</div>
+    <div class="ni" onclick="nav('scripts')" title="Call and email scripts"><span class="ni-icon">📝</span>Scripts</div>
+    <div class="ni" onclick="nav('templates')" title="Saved email templates"><span class="ni-icon">💾</span>Templates</div>
+    <div class="ni" onclick="nav('playbook')" title="Full step-by-step playbook"><span class="ni-icon">📖</span>Client Playbook</div>
+
+    <div class="nsec">Account</div>
+    <div class="ni" onclick="nav('team')" title="Invite teammates into this workspace"><span class="ni-icon">👥</span>Team</div>
   </nav>
   <div class="smrr">
     <div class="smrr-label">Monthly Revenue</div>
@@ -676,6 +738,16 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
       </div>
     </div>
 
+    <!-- TEAM -->
+    <div class="page" id="page-team">
+      <div class="tip-box"><strong>👥 Your workspace's team.</strong> Everyone here shares this same workspace — your clients, prospects, campaigns, and settings. Only an owner can invite or remove people.</div>
+      <div class="sec-hd"><div class="sec-t">Members</div></div>
+      <div class="clist" id="team-members"></div>
+      <div class="sec-hd"><div class="sec-t">Pending invites</div></div>
+      <div class="clist" id="team-pending"></div>
+      <div id="team-invite-box" style="margin-top:14px"></div>
+    </div>
+
   </div><!-- end content -->
 </main>
 </div><!-- end app -->
@@ -916,9 +988,10 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
 
 <!-- Auth screen -->
 <div id="auth-screen" style="display:flex;position:fixed;inset:0;background:var(--bg);z-index:9998;align-items:center;justify-content:center;padding:20px">
-  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:32px 28px">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:32px 28px;box-shadow:var(--shadow-md)">
     <div style="text-align:center;margin-bottom:28px">
-      <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--text);margin-bottom:4px">LeadGen AI</div>
+      <div class="logo-mark" style="margin:0 auto 14px;width:42px;height:42px;border-radius:12px"></div>
+      <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--text);margin-bottom:4px;letter-spacing:-.01em">LeadGen AI</div>
       <div style="font-size:.8rem;color:var(--text3)">Email Business System</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:12px">
@@ -939,6 +1012,25 @@ ol.steps li::before{content:counter(step);background:var(--accent-dim);color:var
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ═══════════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════════
+function _themeIcon(t){return t==='light'?'☀️':'🌙'}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  const btn=document.getElementById('theme-toggle');
+  if(btn)btn.textContent=_themeIcon(t);
+  const mc=document.querySelector('meta[name="theme-color"]');
+  if(mc)mc.setAttribute('content',t==='light'?'#f5f7fa':'#12161d');
+}
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';
+  const next=cur==='light'?'dark':'light';
+  localStorage.setItem('lgs5-theme',next);
+  applyTheme(next);
+}
+applyTheme(document.documentElement.getAttribute('data-theme')==='light'?'light':'dark');
+
 // ═══════════════════════════════════════════
 // SUPABASE CONFIG
 // Get these from: supabase.com → your project
@@ -974,14 +1066,6 @@ async function initAuth(){
     if(r.ok){
       const j=await r.json();
       const d=j.data||{};
-      if(!d.installed){
-        showLogin();
-        authMsg('⚠️ Dashboard password not set yet. Open /wizard on this host to set it, then refresh.',false);
-        document.getElementById('btn-signin').textContent='Refresh status';
-        document.getElementById('btn-signin').onclick=()=>location.reload();
-        document.getElementById('btn-signup').style.display='none';
-        return;
-      }
       if(d.authed){
         _userId='local';
         showApp();
@@ -1042,23 +1126,23 @@ async function signOut(){
   toast('👋 Signed out');
 }
 
-// Wire the existing Sign-In button + password field to the Flask auth gate.
+// Wire the existing Sign-In button + email/password fields to the Flask
+// auth gate. Each login belongs to one workspace now (see auth.py), so the
+// email field is required — no longer hidden the way it was under the old
+// single-password model.
 function _wireLoginForm(){
   const btn=document.getElementById('btn-signin');
   const pw=document.getElementById('auth-password');
   const email=document.getElementById('auth-email');
   btn.textContent='Sign In';
   document.getElementById('btn-signup').style.display='none';
-  // The Flask backend is the source of truth — the email input is no
-  // longer needed; we only require the password. Hide the email field
-  // visually but keep the DOM id stable (other code references it).
-  if(email){email.parentElement.style.display='none'}
   const submit=async()=>{
+    const emailVal=(email.value||'').trim();
     const password=pw.value||'';
-    if(!password){authMsg('Enter your dashboard password');return}
+    if(!emailVal||!password){authMsg('Enter your email and password');return}
     setAuthLoading(true);
     try{
-      const r=await fetch('/api/auth/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
+      const r=await fetch('/api/auth/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:emailVal,password})});
       const j=await r.json();
       if(!j.ok){authMsg(j.error||'Login failed');return}
       _userId='local';
@@ -1070,6 +1154,7 @@ function _wireLoginForm(){
   };
   btn.onclick=submit;
   pw.onkeydown=(ev)=>{if(ev.key==='Enter')submit()};
+  email.onkeydown=(ev)=>{if(ev.key==='Enter')submit()};
 }
 
 // Patch fetch() so call sites that already use Supabase gracefully fall
@@ -1185,6 +1270,7 @@ const PAGE_CFG={
   goals:{title:"Goal Tracker",sub:"Weekly activity targets"},
   playbook:{title:"Client Playbook",sub:"Exactly what to do after closing"},
   projections:{title:"Revenue Projections",sub:"Model your income potential"},
+  team:{title:"Team",sub:"Who has access to this workspace"},
   more:{title:"More",sub:""}
 };
 
@@ -1203,7 +1289,7 @@ function nav(page){
   const fab=document.getElementById('fab');
   if(cfg.fab&&window.innerWidth<=768)fab.style.display='flex';else fab.style.display='none';
   curPage=page;
-  const renders={today:renderToday,dashboard:renderDashboard,prospects:()=>{renderProspects();populateOutSel()},outreach:()=>{populateOutSel();renderOutLog()},clients:renderClients,warmup:renderWarmup,campaigns:populateCampSel,reports:populateRepSel,abtests:renderAB,niches:renderNiches,templates:()=>renderTemplates('subject'),invoices:()=>{renderInvoices();updateInvBadge()},referrals:renderReferrals,goals:renderGoals,playbook:renderPlaybook,projections:updateProj};
+  const renders={today:renderToday,dashboard:renderDashboard,prospects:()=>{renderProspects();populateOutSel()},outreach:()=>{populateOutSel();renderOutLog()},clients:renderClients,warmup:renderWarmup,campaigns:populateCampSel,reports:populateRepSel,abtests:renderAB,niches:renderNiches,templates:()=>renderTemplates('subject'),invoices:()=>{renderInvoices();updateInvBadge()},referrals:renderReferrals,goals:renderGoals,playbook:renderPlaybook,projections:updateProj,team:renderTeam};
   if(renders[page])renders[page]();
 }
 
@@ -1656,6 +1742,87 @@ function renderReferrals(){
   if(!S.referrals.length){el.innerHTML=`<div class="empty"><div class="ei">🌟</div><p>No referrals yet.</p><button class="btn btn-primary" onclick="openM('modal-referral')">+ Log Referral</button></div>`;return}
   const bySource={};S.referrals.forEach(r=>{if(!bySource[r.source])bySource[r.source]=[];bySource[r.source].push(r)});
   el.innerHTML=Object.entries(bySource).map(([source,refs])=>{const cc=refs.filter(r=>r.status==='closed').length;return`<div class="ic" style="border-left:3px solid var(--yellow)"><div class="ic-top" style="margin-bottom:9px"><div><div class="ic-name">🌟 ${source}</div><div class="ic-meta">${refs.length} referral${refs.length>1?'s':''} · ${cc} closed</div></div>${cc>0?'<span class="badge b-gr">Top Referrer</span>':''}</div>${refs.map(r=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px;margin-bottom:5px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:7px"><div><div style="font-size:.83rem;font-weight:600;color:var(--text)">${r.prospect}</div><div style="font-size:.72rem;color:var(--text2)">${r.niche} · ${fmtDate(r.date)}</div></div><div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0"><select onchange="updateRefStatus('${r.id}',this.value)" style="background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;font-size:.7rem;color:var(--text2)">${['intro','call','closed','lost'].map(s=>`<option value="${s}" ${r.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}</select><button class="btn btn-danger btn-xs" onclick="deleteRef('${r.id}')">✕</button></div></div></div>`).join('')}</div>`;}).join('');
+}
+
+// ═══════════════════════════════════════════
+// TEAM — talks directly to the Flask backend (not the S/localStorage
+// sync layer above, since team membership isn't per-client business
+// data, it's account data scoped to this whole workspace).
+// ═══════════════════════════════════════════
+let _teamIsOwner=false;
+async function renderTeam(){
+  const membersEl=document.getElementById('team-members');
+  const pendingEl=document.getElementById('team-pending');
+  const inviteBoxEl=document.getElementById('team-invite-box');
+  try{
+    const r=await fetch('/api/team',{credentials:'same-origin'});
+    const j=await r.json();
+    if(!j.ok){membersEl.innerHTML=`<div class="empty"><p>${j.error||'Could not load team.'}</p></div>`;pendingEl.innerHTML='';inviteBoxEl.innerHTML='';return}
+    const {users,pending_invites}=j.data;
+    const statusRes=await fetch('/api/auth/status',{credentials:'same-origin'}).then(r=>r.json());
+    _teamIsOwner=(statusRes.data||{}).role==='owner';
+    const myUserId=(statusRes.data||{}).user_id;
+
+    membersEl.innerHTML=users.map(u=>`
+      <div class="ic">
+        <div class="ic-top">
+          <div>
+            <div class="ic-name">${escHtml(u.name||u.email)}${u.id===myUserId?' <span style="color:var(--text3);font-weight:400">(you)</span>':''}</div>
+            <div class="ic-meta">${escHtml(u.email)} · ${u.role==='owner'?'Owner':'Member'}${u.last_login_at?' · last in '+fmtDate(u.last_login_at):''}</div>
+          </div>
+          ${_teamIsOwner&&u.id!==myUserId?`<button class="btn btn-danger btn-xs" onclick="removeTeamMember('${u.id}')">Remove</button>`:''}
+        </div>
+      </div>
+    `).join('')||'<div class="empty"><p>No members yet.</p></div>';
+
+    pendingEl.innerHTML=pending_invites.length?pending_invites.map(inv=>`
+      <div class="ic">
+        <div class="ic-top">
+          <div><div class="ic-name">${escHtml(inv.email)}</div><div class="ic-meta">Invited as ${inv.role} · expires ${fmtDate(inv.expires_at)}</div></div>
+          <span class="badge b-ye">Pending</span>
+        </div>
+      </div>
+    `).join(''):'<div class="empty"><p>No pending invites.</p></div>';
+
+    inviteBoxEl.innerHTML=_teamIsOwner?`
+      <div class="fg">
+        <label class="fl">Invite a teammate into this workspace</label>
+        <div style="display:flex;gap:7px">
+          <input class="fi" id="team-invite-email" type="email" placeholder="teammate@company.com" style="flex:1">
+          <button class="btn btn-primary" onclick="inviteTeamMember()">Invite</button>
+        </div>
+      </div>
+    `:'';
+  }catch(e){
+    membersEl.innerHTML=`<div class="empty"><p>Network error loading team.</p></div>`;
+  }
+}
+
+function escHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML}
+
+async function inviteTeamMember(){
+  const input=document.getElementById('team-invite-email');
+  const email=(input.value||'').trim();
+  if(!email){toast('⚠️ Enter an email first');return}
+  try{
+    const r=await fetch('/api/team/invite',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const j=await r.json();
+    if(!j.ok){toast('❌ '+(j.error||'Could not send invite'));return}
+    input.value='';
+    toast(j.data.email_sent?`✅ Invite sent to ${email}`:'✅ Invite created — email did not send, share the link manually');
+    renderTeam();
+  }catch(e){toast('❌ Network error')}
+}
+
+async function removeTeamMember(userId){
+  if(!confirm('Remove this person from the workspace?'))return;
+  try{
+    const r=await fetch('/api/team/'+userId,{method:'DELETE',credentials:'same-origin',headers:{'Content-Type':'application/json'}});
+    const j=await r.json();
+    if(!j.ok){toast('❌ '+(j.error||'Could not remove'));return}
+    toast('👋 Removed');
+    renderTeam();
+  }catch(e){toast('❌ Network error')}
 }
 
 // ═══════════════════════════════════════════
