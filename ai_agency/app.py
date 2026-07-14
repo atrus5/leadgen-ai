@@ -48,11 +48,12 @@ import logging
 from pathlib import Path
 from typing import Any
 
+import requests
 from flask import (
-    Flask, Blueprint, jsonify, request, send_from_directory, abort, Response
+    Flask, Blueprint, jsonify, request, send_from_directory, abort, Response, session
 )
 
-from . import auth, config, db
+from . import admin, auth, config, db, invites, llm, platform_db
 from .hunters import apollo, google_places
 from .outreach import forwarder, generator, reply_parser, sender
 from .scheduler import jobs as sched_jobs
@@ -85,9 +86,19 @@ else:
         "session key. Operators will be silently logged out across restarts. "
         "Set LEADGEN_FLASK_SECRET in /etc/leadgen.env for production."
     )
+# platform.db is a true singleton, so it's safe to touch at import time —
+# unlike per-workspace agency.db, which has no "the current workspace" yet
+# and is initialised lazily on first touch (see db.py's _ensure_initialized).
+platform_db.init_schema()
+platform_db.ensure_default_platform_settings()
+
 try:
-    _base_url = (config.load_settings().get("tracking") or {}).get("base_url") or ""
-    app.config["SESSION_COOKIE_SECURE"] = _base_url.startswith("https://")
+    # Cookie security is a platform-level (not per-workspace) concern: the
+    # whole app — admin console + every tenant's dashboard — is served from
+    # one public URL, so it's keyed off the platform's own base_url rather
+    # than any single workspace's tracking.base_url.
+    _platform_base = (platform_db.get_setting("invite_mailbox") or {}).get("base_url") or ""
+    app.config["SESSION_COOKIE_SECURE"] = _platform_base.startswith("https://")
 except Exception:
     app.config["SESSION_COOKIE_SECURE"] = False
 app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -95,14 +106,7 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["PERMANENT_SESSION_LIFETIME"] = 12 * 60 * 60
 
 # ── Boot ─────────────────────────────────────────────────────────────────
-db.init_schema()
-db.ensure_default_settings()
-# Persist a sample settings.json so the operator can see what to fill in.
-config.write_default_settings_file()
 sched_jobs.install()
-# First-boot auth + webhook secret bootstrap. Idempotent.
-auth.generate_setup_token_if_uninstalled()
-auth.ensure_webhook_secret()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
@@ -128,9 +132,27 @@ def _row_to_dict(row) -> dict[str, Any]:
 
 
 # ── Legacy webhook compatibility ────────────────────────────────────────
+# Each workspace's own landing page/pipeline posts into ITS OWN data, so
+# these carry the workspace id in the URL and are gated by that workspace's
+# own webhook_secret — not the session/API auth used everywhere else, since
+# these are called by external, unauthenticated parties.
+def _enter_workspace_or_404(workspace_id: str):
+    """Resolve + activate a workspace by id for a public (non-session)
+    webhook route. Returns an error response tuple if the workspace doesn't
+    exist or is inactive, None on success (in which case db.use_workspace()
+    has already been called)."""
+    ws = platform_db.get_workspace(workspace_id)
+    if not ws or ws["status"] != "active":
+        return _err("not_found", 404)
+    db.use_workspace(workspace_id)
+    return None
+
+
 def _check_webhook_token():
-    """Gate /run-audit and /new-lead. Returns (response, status) tuple if
-    blocked, None if allowed. Constant-time compare via secrets.compare_digest."""
+    """Gate /w/<id>/run-audit and /w/<id>/new-lead. Returns an error
+    response tuple if blocked, None if allowed. Constant-time compare via
+    secrets.compare_digest. Caller must have already activated the
+    workspace (see _enter_workspace_or_404)."""
     supplied = (request.args.get("token") or "").strip()
     expected = auth._webhook_secret()
     if not expected:
@@ -141,10 +163,14 @@ def _check_webhook_token():
     return None
 
 
-@app.route("/run-audit", methods=["POST"])
-def run_audit_legacy():
-    """The landing page (public/index.html) posts here when a visitor requests a free audit.
-    Gated by ?token=<webhook_secret> — see GET /api/auth/webhook/url."""
+@app.route("/w/<workspace_id>/run-audit", methods=["POST"])
+def run_audit_legacy(workspace_id: str):
+    """A workspace's own landing page posts here when a visitor requests a
+    free audit. Gated by ?token=<that workspace's webhook_secret> — see
+    GET /api/auth/webhook/url."""
+    not_found = _enter_workspace_or_404(workspace_id)
+    if not_found is not None:
+        return not_found
     gated = _check_webhook_token()
     if gated is not None:
         return gated
@@ -165,10 +191,14 @@ def run_audit_legacy():
     )
 
 
-@app.route("/new-lead", methods=["POST"])
-def new_lead_legacy():
-    """Webhook used by an external pipeline to push an inbound reply.
-    Gated by ?token=<webhook_secret> — see GET /api/auth/webhook/url."""
+@app.route("/w/<workspace_id>/new-lead", methods=["POST"])
+def new_lead_legacy(workspace_id: str):
+    """Webhook used by an external pipeline to push an inbound reply for
+    one workspace. Gated by ?token=<that workspace's webhook_secret> — see
+    GET /api/auth/webhook/url."""
+    not_found = _enter_workspace_or_404(workspace_id)
+    if not_found is not None:
+        return not_found
     gated = _check_webhook_token()
     if gated is not None:
         return gated
@@ -200,6 +230,11 @@ def index():
     START-HERE.md. If you preferred to co-locate every static page
     under public/, move this file to ai_agency/public/index.html and
     revert this route to `send_from_directory(PUBLIC_DIR, \"index.html\")`.
+
+    No server-side redirect gate here anymore: accounts are created
+    exclusively via invite (see /accept-invite.html), so a logged-out
+    visitor just sees this page's own client-side login screen — there's
+    no "not installed yet" state to redirect away from.
     """
     response = send_from_directory(BASE_DIR.parent, "index.html")
     # SPA: never serve stale index.html. Strip ETag + Last-Modified too
@@ -229,6 +264,16 @@ def index_html():
 @app.route("/wizard/")
 def wizard():
     return send_from_directory(PUBLIC_DIR, "wizard.html")
+
+
+@app.route("/admin")
+@app.route("/admin/")
+def admin_console():
+    """Paul's super-admin console. Client-side JS (public/admin/index.html)
+    checks GET /api/admin/status and shows its own login form when needed —
+    same pattern as the tenant dashboard, just against the separate admin
+    session/auth system in admin.py."""
+    return send_from_directory(PUBLIC_DIR / "admin", "index.html")
 
 
 @app.route("/playbook/")
@@ -288,23 +333,28 @@ def _is_bot_ua(user_agent: str) -> bool:
     return any(p in ua_lower for p in lowered)
 
 
-@app.route("/t/o/<tracking_id>.gif")
-def track_open(tracking_id: str):
-    """Tracking-pixel endpoint. Always returns the GIF (even on miss) so
-    spam-house scanners do not see 4xx. Always inserts the open (even for
-    bot UA hits) so we keep an auditable trail; the is_bot flag lets
-    /api/stats/open-rate exclude them from the headline open_rate. IP
-    truncation (GDPR) is enforced inside db.record_open.
+@app.route("/t/o/<workspace_id>/<tracking_id>.gif")
+def track_open(workspace_id: str, tracking_id: str):
+    """Tracking-pixel endpoint, scoped to the workspace that sent the
+    email (see outreach/sender.py's tracking-URL builder). Always returns
+    the GIF (even on an unknown workspace or a miss) so spam-house scanners
+    do not see 4xx. Always inserts the open (even for bot UA hits) so we
+    keep an auditable trail; the is_bot flag lets /api/stats/open-rate
+    exclude them from the headline open_rate. IP truncation (GDPR) is
+    enforced inside db.record_open.
     """
-    row = db.lookup_send_by_tracking(tracking_id)
-    if row is not None:
-        ua = request.headers.get("User-Agent", "")
-        db.record_open(
-            row["id"],
-            ua,
-            request.remote_addr or "",
-            is_bot=_is_bot_ua(ua),
-        )
+    ws = platform_db.get_workspace(workspace_id)
+    if ws is not None and ws["status"] == "active":
+        db.use_workspace(workspace_id)
+        row = db.lookup_send_by_tracking(tracking_id)
+        if row is not None:
+            ua = request.headers.get("User-Agent", "")
+            db.record_open(
+                row["id"],
+                ua,
+                request.remote_addr or "",
+                is_bot=_is_bot_ua(ua),
+            )
     return Response(TRACKING_PIXEL_GIF, mimetype="image/gif", headers=TRACKING_PIXEL_HEADERS)
 
 
@@ -326,7 +376,7 @@ def api_settings_put():
     key = str(body["key"])
     value = body["value"]
     db.set_setting(key, value)
-    config.load_settings.cache_clear()  # type: ignore[attr-defined]
+    config.invalidate_settings()
     return _ok({key: value})
 
 
@@ -481,82 +531,40 @@ def api_open_rate():
 @api.route("/settings/test-llm", methods=["POST"])
 def api_test_llm():
     """
-    Verify that the local Ollama LLM is reachable so the wizard can
-    fail fast (and not at first campaign send) if Ollama is down or
-    the model is not pulled. Calls a tiny idempotent prompt so we get
-    a real ChatResponse back, not just an HTTP-up check.
-
-    Wall-clock bounded at 20s because a cold llama3 load can take 30–90s.
+    Verify the configured Groq API key + model actually work, so the wizard
+    can fail fast (and not at first campaign send) if the key is missing/
+    invalid or the model name is wrong. Calls a tiny idempotent prompt so we
+    get a real completion back, not just a reachability check.
 
     Status codes:
         200 — model replied with text
-        422 — user-correctable failure: model name unset, model not pulled,
-              empty response
-        500 — server-side failure: ollama python pkg missing, ollama daemon
-              unreachable, chat timed out
+        422 — user-correctable failure: key unset, key rejected, model not
+              found, empty response
+        500 — transport failure talking to Groq (network, timeout, 5xx)
     """
+    if not llm.available():
+        return _err("apis.groq_api_key not set — add it in /wizard step 5", 422)
+
     try:
-        import ollama  # type: ignore
-    except ImportError:
-        # Missing Python dep on the server — operator must install.
-        return _err("ollama python package is not installed; run `pip install ollama` on the host", 500)
-
-    from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
-
-    s = config.load_settings().get("apis", {})
-    model = (s.get("ollama_model") or "llama3").strip() or "llama3"
-
-    # 1) Cheap readiness: if ollama is down this will raise.
-    try:
-        ollama.list()
-    except Exception as exc:
-        return _err(f"ollama service unreachable on localhost:11434 — {exc}", 500)
-
-    # 2) Tiny prompt — num_predict cap (16 keeps BOS/EOS chatter safe)
-    #    + a 20s wall-clock bound via ThreadPoolExecutor since the Ollama
-    #    python lib does not expose a per-call timeout.
-    def _chat() -> object:
-        return ollama.chat(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are a connectivity check. Reply with ONE short word only."},
-                {"role": "user", "content": "ping"},
-            ],
-            options={"num_predict": 16, "temperature": 0},
+        text = llm.chat(
+            "You are a connectivity check. Reply with ONE short word only.",
+            "ping",
+            temperature=0, max_tokens=16, timeout=20,
         )
-
-    try:
-        with ThreadPoolExecutor(max_workers=1) as ex:
-            future = ex.submit(_chat)
-            try:
-                resp = future.result(timeout=20)
-            except FuturesTimeoutError:
-                return _err(
-                    f"ollama chat timed out after 20s — model '{model}' may still be loading its weights. Try again in a minute.",
-                    code=500,
-                )
+    except requests.exceptions.HTTPError as exc:
+        status = exc.response.status_code if exc.response is not None else None
+        if status in (401, 403):
+            return _err("groq rejected the API key — check apis.groq_api_key", 422)
+        if status == 404:
+            return _err(f"groq model '{llm.model()}' not found — check apis.groq_model", 422)
+        return _err(f"groq request failed: {exc}", 500)
+    except requests.exceptions.Timeout:
+        return _err("groq request timed out after 20s — try again", 500)
     except Exception as exc:
-        msg = str(exc)
-        if "model" in msg.lower() and "not found" in msg.lower():
-            return _err(
-                f"ollama is up but model '{model}' is not pulled. "
-                f"Run `ollama pull {model}` on the host.",
-                code=422,
-            )
-        return _err(f"ollama chat() failed: {msg}", 500)
+        return _err(f"groq request failed: {exc}", 500)
 
-    # Ollama python 0.1.x returns a dict-like response; newer versions
-    # return a dataclass. Handle both shapes for the message content.
-    try:
-        text = ((resp.get("message") or {}).get("content") or "").strip()
-    except AttributeError:
-        text = getattr(resp, "message", None)
-        text = getattr(text, "content", "") if text else ""
-        text = (text or "").strip()
-    if not text:
-        return _err(f"ollama replied with empty content from model '{model}'", 422)
-    db.audit("llm.test_ok", {"model": model, "reply": text[:40]})
-    return _ok({"model": model, "reply": text[:80]})
+    db.audit("llm.test_ok", {"model": llm.model(), "reply": text[:40]})
+    return _ok({"model": llm.model(), "reply": text[:80]})
 
 
 # Clients ------------------------------------------------------------------
@@ -868,7 +876,69 @@ def api_dashboard_summary():
     })
 
 
-# the BLUEPRINT_AUTH_EXEMPT allow-list below).
+# Team ----------------------------------------------------------------------
+# A workspace can hold one person or a small team — same structure either
+# way. These three routes let the CURRENT workspace's owner see who's in
+# it, invite a teammate (reuses the exact same invites.py mechanism admin.py
+# uses for "admin invites the workspace's first owner"), and remove one.
+@api.route("/team", methods=["GET"])
+def api_team_list():
+    ws_id = session["workspace_id"]
+    users = [
+        {k: v for k, v in dict(u).items() if k != "password_hash"}
+        for u in platform_db.list_users_for_workspace(ws_id)
+    ]
+    pending = [
+        dict(i) for i in platform_db.list_invites_for_workspace(ws_id)
+        if i["status"] == "pending"
+    ]
+    return _ok({"users": users, "pending_invites": pending})
+
+
+@api.route("/team/invite", methods=["POST"])
+def api_team_invite():
+    if session.get("role") != "owner":
+        return _err("only_the_workspace_owner_can_invite_teammates", 403)
+    body = _get_json()
+    email = (body.get("email") or "").strip().lower()
+    if not email:
+        return _err("email_required", 422)
+    if platform_db.get_user_by_email(email):
+        return _err("an_account_already_exists_for_that_email", 409)
+    ws_id = session["workspace_id"]
+    ws = platform_db.get_workspace(ws_id)
+    invite = invites.create_invite(
+        workspace_id=ws_id, email=email, role="member",
+        invited_by_type="user", invited_by_id=session["user_id"],
+    )
+    send_result = invites.send_invite_email(invite, ws["name"])
+    return _ok({
+        "email_sent": send_result.get("ok", False),
+        "invite_link": send_result.get("link"),
+        "email_error": send_result.get("error"),
+    })
+
+
+@api.route("/team/<user_id>", methods=["DELETE"])
+def api_team_remove(user_id: str):
+    if session.get("role") != "owner":
+        return _err("only_the_workspace_owner_can_remove_teammates", 403)
+    target = platform_db.get_user(user_id)
+    if not target or target["workspace_id"] != session["workspace_id"]:
+        return _err("not_found", 404)
+    if user_id == session["user_id"]:
+        return _err("cannot_remove_your_own_account", 422)
+    platform_db.set_user_status(user_id, "disabled")
+    return _ok({"id": user_id, "status": "disabled"})
+
+
+TENANT_AUTH_EXEMPT = {
+    "auth.status",
+    "auth.login",
+    "auth.accept_invite",
+    "track_open",  # tracking pixel must stay public
+}
+
 
 def _enforce_json_on_mutations() -> tuple[Any, int] | None:
     """Reject cross-site form-encoded POSTs. Combined with SameSite=Lax, this
@@ -884,21 +954,31 @@ def _enforce_json_on_mutations() -> tuple[Any, int] | None:
 def api_before_request():
     # 1) Authentication: must be authed, except for a small allow-list.
     endpoint = request.endpoint or ""
-    if not auth.is_authed() and endpoint not in (
-        "auth.status",
-        "auth.install_token",
-        "auth.install",
-        "auth.login",
-        "track_open",  # tracking pixel must stay public
-    ):
-        db.audit("api.unauthorized", {"endpoint": endpoint, "method": request.method})
-        return _err("unauthorized", 401)
-    # 2) CSRF mitigation: mutating endpoints require application/json.
+    if endpoint not in TENANT_AUTH_EXEMPT:
+        if not auth.is_authed():
+            platform_db.audit("api.unauthorized", {"endpoint": endpoint, "method": request.method})
+            return _err("unauthorized", 401)
+        # 2) The workspace this session belongs to must still be active —
+        # re-checked every request, not just at login time, so a workspace
+        # suspended mid-session is locked out immediately.
+        ws = platform_db.get_workspace(session["workspace_id"])
+        if not ws or ws["status"] != "active":
+            session.clear()
+            return _err("workspace_inactive", 403)
+        # 3) The one line that makes every existing route body work
+        # unmodified: everything downstream (db.get_db(), config.load_settings())
+        # now transparently resolves against THIS workspace's own SQLite file.
+        db.use_workspace(session["workspace_id"])
+        auth.ensure_webhook_secret()
+    # 4) CSRF mitigation: mutating endpoints require application/json.
     bad = _enforce_json_on_mutations()
     if bad is not None:
         return bad
+
+
 app.register_blueprint(api)
 app.register_blueprint(auth.auth_bp)
+app.register_blueprint(admin.admin_bp)
 
 
 # ── local helpers ────────────────────────────────────────────────────────

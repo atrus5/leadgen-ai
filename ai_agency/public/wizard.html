@@ -24,7 +24,14 @@
     <a href="/playbook/" class="text-sm text-sky-400 hover:text-sky-300">📖 Read full playbook →</a>
   </header>
 
-  <div class="grid lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
+  <!-- Auth check: the wizard is only useful to an already-logged-in
+       workspace user (accounts are created exclusively via invite — see
+       /accept-invite.html — not here). A logged-out visitor gets bounced
+       to / (the dashboard's own login screen), same session this page's
+       own PUT /api/settings calls rely on. -->
+  <div id="authCheck" class="text-sm text-slate-400">Checking your session…</div>
+
+  <div id="wizardMain" class="hidden grid lg:grid-cols-[280px_minmax(0,1fr)] gap-8">
 
     <aside class="space-y-2 text-sm">
       <ol id="stepNav" class="space-y-1">
@@ -214,15 +221,18 @@ Value:   1 ASPMX.L.GOOGLE.COM       <!-- Google Workspace -->
 
         <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 mt-4">
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-semibold">Local LLM (Ollama · llama3)</h3>
-            <label class="text-xs flex items-center gap-2"><input type="checkbox" checked disabled> Personalises opener copy</label>
+            <h3 class="text-sm font-semibold">LLM (Groq)</h3>
+            <label class="text-xs flex items-center gap-2"><input type="checkbox" checked disabled> Personalises opener copy + classifies replies</label>
           </div>
-          <p class="text-xs text-slate-500 mb-3">Ollama runs at <code class="text-sky-300">http://localhost:11434</code>. The agency app uses it to lightly rewrite each opener so it reads like a person wrote it (rather than a template). If Ollama is offline, the renderer falls back to the pure template — campaigns still send, copy just feels less personal.</p>
-          <label class="block text-xs text-slate-400 mb-1">Model name (must be pulled locally)</label>
-          <input data-key="apis.ollama_model" value="llama3"
+          <p class="text-xs text-slate-500 mb-2">Get a free API key at <a class="text-sky-400 hover:underline" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com/keys</a>. The agency app uses it to lightly rewrite each opener so it reads like a person wrote it, and to classify inbound replies as Hot / More info / Not now / etc. If Groq is unreachable or unconfigured, email generation falls back to the pure template and replies fall back to keyword matching — campaigns still send, just less smart.</p>
+          <label class="block text-xs text-slate-400 mb-1">Groq API key</label>
+          <input data-key="apis.groq_api_key" type="password" placeholder="gsk_..."
+                 class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm font-mono mb-3">
+          <label class="block text-xs text-slate-400 mb-1">Model name</label>
+          <input data-key="apis.groq_model" value="llama-3.3-70b-versatile"
                  class="setKey w-full bg-slate-900 border border-slate-800 rounded p-2 text-sm font-mono mb-3">
           <button data-action="test-llm"
-                  class="mt-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg px-3 py-2 text-xs w-full">Test local LLM (llama3)</button>
+                  class="mt-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg px-3 py-2 text-xs w-full">Test Groq connection</button>
         </div>
 
         <div class="bg-slate-950 border border-slate-800 rounded-xl p-5 mt-4">
@@ -283,6 +293,10 @@ Value:   1 ASPMX.L.GOOGLE.COM       <!-- Google Workspace -->
           <button data-action="trigger-brief" class="bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold rounded-lg px-4 py-2 text-sm">☀️ Send morning brief now</button>
           <button data-action="trigger-check" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg px-4 py-2 text-sm">📥 Check inbox now</button>
         </div>
+
+        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-5 mt-8 text-sm text-emerald-200">
+          ✓ Everything here saves as you go — <a href="/" class="underline font-semibold">head to your dashboard</a> whenever you're ready.
+        </div>
       </section>
 
     </main>
@@ -315,6 +329,27 @@ $('#stepNav').addEventListener('click', e => {
   const li = e.target.closest('.step'); if(!li) return;
   showStep(li.dataset.step);
 });
+
+// ═══════════════════════════════════════════
+// AUTH CHECK — accounts are created exclusively via invite (see
+// /accept-invite.html), so this page just confirms there's a live session
+// before revealing the settings form; a logged-out visitor bounces to /.
+// ═══════════════════════════════════════════
+async function checkAuth(){
+  try{
+    const r = await fetch('/api/auth/status');
+    const j = await r.json();
+    if(j.data && j.data.authed){
+      $('#authCheck').classList.add('hidden');
+      $('#wizardMain').classList.remove('hidden');
+      showStep(1);
+      return;
+    }
+  } catch(e){ /* fall through to redirect */ }
+  window.location.href = '/';
+}
+checkAuth();
+
 $('#brandInput')?.addEventListener('input', e => {
   const sug = pickSuggestions(e.target.value);
   $('#suggestions').innerHTML = sug.map(s =>

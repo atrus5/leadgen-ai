@@ -1,15 +1,16 @@
 """
 Email generator. Composes the niche-DNA template and (optionally) personalises
-the opener using the local Llama 3 model running via Ollama. The LLM step is
-optional — when Ollama is unreachable the renderer falls back to the templated
-body, which is intentionally already decked out with the niche's hooks.
+the opener using Groq's hosted chat-completions API. The LLM step is
+optional — when Groq is unreachable or unconfigured, the renderer falls back
+to the templated body, which is intentionally already decked out with the
+niche's hooks.
 """
 from __future__ import annotations
 
 import logging
 from typing import Any
 
-from .. import config
+from .. import config, llm
 from . import templates
 
 LOG = logging.getLogger("outreach.generator")
@@ -18,19 +19,12 @@ LLAMA_TIMEOUT_SECONDS = 30
 
 
 def _llama_available() -> bool:
-    try:
-        import ollama  # type: ignore
-        # Cheap readiness ping
-        ollama.list()
-        return True
-    except Exception:
-        return False
+    return llm.available()
 
 
 def _rewrite_with_llama(niche: str, base_body: str, *, business: str, contact: str | None, city: str | None, ltv: str) -> str | None:
-    """Use Llama 3 to refine the templated body. Never raises."""
+    """Use Groq to refine the templated body. Never raises."""
     try:
-        import ollama  # type: ignore
         system = (
             "You are a cold-email copywriter for local-service businesses. "
             "You produce 4-6 sentence cold emails. Tone: plain-spoken, "
@@ -48,15 +42,9 @@ def _rewrite_with_llama(niche: str, base_body: str, *, business: str, contact: s
             "for a real local owner-operator. Keep the core hook. Output ONLY the body. "
             f"Body to rewrite:\n\n{base_body}"
         )
-        resp = ollama.chat(
-            model="llama3",
-            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-        )
-        text = (resp.get("message") or {}).get("content") or ""
-        text = text.strip()
-        return text or None
+        return llm.chat(system, user, temperature=0.4, max_tokens=220, timeout=LLAMA_TIMEOUT_SECONDS)
     except Exception as exc:
-        LOG.warning("llama rewrite skipped: %s", exc)
+        LOG.warning("groq rewrite skipped: %s", exc)
         return None
 
 

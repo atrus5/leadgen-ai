@@ -1,6 +1,5 @@
 """
-Settings loader. Reads JSON files into the `settings` table on first boot and
-exposes typed helpers for the rest of the app.
+Settings loader. Exposes typed, per-workspace helpers for the rest of the app.
 """
 from __future__ import annotations
 
@@ -10,68 +9,15 @@ from pathlib import Path
 from typing import Any
 
 CONFIG_DIR = Path(__file__).resolve().parent / "config"
-SETTINGS_FILE = CONFIG_DIR / "settings.json"
 NICHES_FILE = CONFIG_DIR / "niches.json"
 
 
-def _ensure_dirs() -> None:
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def write_default_settings_file() -> Path:
-    """Write a sample settings.json on first boot so the operator can fill it in."""
+@lru_cache(maxsize=64)
+def _load_settings_cached(workspace_id: str) -> dict[str, Any]:
     from . import db
 
-    _ensure_dirs()
-    if SETTINGS_FILE.exists():
-        return SETTINGS_FILE
-
-    sample = {
-        "agent": {
-            "owner_email": "",
-            "from_name": "Your Agency",
-            "from_address": "hello@your-new-domain.com",
-            "smtp_host": "smtp.your-provider.com",
-            "smtp_port": 587,
-            "smtp_user": "hello@your-new-domain.com",
-            "smtp_pass": "",
-            "smtp_tls": "starttls",
-            "imap_host": "imap.your-provider.com",
-            "imap_port": 993,
-            "imap_user": "hello@your-new-domain.com",
-            "imap_pass": "",
-            "imap_ssl": True,
-            "morning_brief_to": "you@gmail.com",
-            "morning_brief_hour": 8,
-            "nightly_hunt_hour": 2,
-        },
-        "apis": {
-            "apollo_api_key": "",
-            "apollo_use": True,
-            "google_places_api_key": "",
-            "google_places_use": True,
-            "hunter_api_key": "",
-            "hunter_use": False,
-        },
-    }
-    SETTINGS_FILE.write_text(json.dumps(sample, indent=2))
-    db.audit("settings.bootstrap_file", {"path": str(SETTINGS_FILE)})
-    return SETTINGS_FILE
-
-
-@lru_cache(maxsize=1)
-def load_settings() -> dict[str, Any]:
-    """Read all settings for the running process, merged with on-disk file.
-
-    Settings in the SQLite `settings` table win over defaults; values in
-    `config/settings.json` initialize the table on first boot.
-    """
-    from . import db
-
-    # Bootstrap default keys if absent
-    db.init_schema()
-    db.ensure_default_settings()
-
+    # db.get_db() lazily runs init_schema()+ensure_default_settings() the
+    # first time this workspace is touched, so nothing to bootstrap here.
     out: dict[str, Any] = {}
     for row in db.get_db().execute("SELECT key, value FROM settings").fetchall():
         try:
@@ -81,11 +27,34 @@ def load_settings() -> dict[str, Any]:
     return out
 
 
+def load_settings() -> dict[str, Any]:
+    """Read all settings for the CURRENT workspace — db.use_workspace(id)
+    must already have been called (see app.py's before_request and
+    scheduler/jobs.py's sweep functions). Cached per-workspace until
+    invalidate_settings() is called."""
+    from . import db
+
+    ws = db.current_workspace()
+    if ws is None:
+        raise RuntimeError(
+            "db.use_workspace(workspace_id) must be called before config.load_settings()"
+        )
+    return _load_settings_cached(ws)
+
+
+def invalidate_settings() -> None:
+    """Clear the settings cache for every workspace. A full clear (rather
+    than precise per-workspace eviction) is fine at the "low tens of
+    tenants" scale this app targets — the next load_settings() call for any
+    workspace just re-reads its row."""
+    _load_settings_cached.cache_clear()
+
+
 @lru_cache(maxsize=1)
 def load_niches() -> list[dict[str, Any]]:
     if not NICHES_FILE.exists():
         return []
-    return json.loads(NICHES_FILE.read_text()).get("niches", [])
+    return json.loads(NICHES_FILE.read_text(encoding="utf-8")).get("niches", [])
 
 
 def niche_lookup(name: str) -> dict[str, Any] | None:
@@ -93,4 +62,8 @@ def niche_lookup(name: str) -> dict[str, Any] | None:
         if n["key"].lower() == name.lower():
             return n
     return None
+
+
+def tracking_base_url() -> str:
+    return (load_settings().get("tracking") or {}).get("base_url") or ""
 

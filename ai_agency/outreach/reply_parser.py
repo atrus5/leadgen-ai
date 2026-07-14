@@ -4,8 +4,8 @@ IMAP reply poller.
 Periodically connects to the configured IMAP mailbox over SSL, fetches UNSEEN
 messages, attempts to match each sender against our prospects table, and
 classifies the intent (HOT / MORE_INFO / NOT_NOW / OUT_OF_OFFICE / UNSUBSCRIBE
-/ NOISE) using Llama 3 via Ollama (or a deterministic keyword fallback when
-the local LLM is unreachable).
+/ NOISE) using Groq's hosted chat-completions API (or a deterministic keyword
+fallback when Groq is unreachable or unconfigured).
 
 HOT-classified rows are forwarded to the agency client by
 `outreach/forwarder.py`. ALL repliess are persisted in `replies`, even NOISE,
@@ -22,7 +22,7 @@ from email.header import decode_header, make_header
 from email.utils import parseaddr
 from typing import Any, Iterable
 
-from .. import config, db
+from .. import config, db, llm
 
 LOG = logging.getLogger("outreach.reply_parser")
 
@@ -36,9 +36,8 @@ def _agent() -> dict[str, Any]:
 
 
 def _classify_with_llama(subject: str, body: str) -> tuple[str | None, float | None]:
-    """Returns (label, confidence) or (None, None) if LLM unavailable."""
+    """Returns (label, confidence) or (None, None) if the LLM is unavailable."""
     try:
-        import ollama  # type: ignore
         system = (
             "You are an intent classifier for cold-email replies. "
             "Reply with EXACTLY one of these tokens (no explanation, no quotes):\n"
@@ -50,17 +49,12 @@ def _classify_with_llama(subject: str, body: str) -> tuple[str | None, float | N
             "NOISE  - unrelated promotional, or corporate noise\n"
         )
         prompt = f"Subject: {subject or '(none)'}\n\nBody:\n{body[:2000]}"
-        r = ollama.chat(model="llama3", messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": prompt},
-        ])
-        text = (r.get("message") or {}).get("content") or ""
-        text = text.strip().upper()
+        text = llm.chat(system, prompt, temperature=0, max_tokens=10).strip().upper()
         for label in LABELS:
             if label in text:
                 return label, 0.85
     except Exception as exc:
-        LOG.debug("llama classifier offline: %s", exc)
+        LOG.debug("groq classifier offline: %s", exc)
     return None, None
 
 

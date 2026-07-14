@@ -152,7 +152,7 @@ def send_to_prospect(
     tracking_url: str | None = None
     if tracking_cfg.get("enabled") and (tracking_cfg.get("base_url") or "").strip():
         tracking_id = _secrets.token_urlsafe(8)  # 11-char URL-safe token
-        tracking_url = f"{tracking_cfg['base_url'].rstrip('/')}/t/o/{tracking_id}.gif"
+        tracking_url = f"{tracking_cfg['base_url'].rstrip('/')}/t/o/{db.current_workspace()}/{tracking_id}.gif"
 
     msg = _build_message(
         from_addr=from_addr,

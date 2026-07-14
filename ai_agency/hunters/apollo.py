@@ -28,6 +28,7 @@ import requests
 
 from .. import db
 from ..config import load_niches, load_settings
+from . import enrich
 
 LOG = logging.getLogger("hunters.apollo")
 
@@ -105,7 +106,7 @@ def search_people(niche: str, client: dict[str, Any], per_page: int = 25) -> lis
             timeout=30,
         )
     except requests.RequestException as exc:
-        db.audit("apollo.error", {"err": str(exc), "niche": niche, "city": city})
+        db.audit("apollo.error", {"err": str(exc), "niche": niche, "city": client.get("city")})
         LOG.warning("Apollo transport error: %s", exc)
         return []
 
@@ -135,6 +136,7 @@ def to_prospect_dict(person: dict[str, Any], client: dict[str, Any]) -> dict[str
         "contact_name": _full_name(person),
         "contact_email": person.get("email"),
         "contact_title": person.get("title"),
+        "notes": None,
         "source": "Apollo.io",
         "score": _score(person, org),
     }
@@ -192,6 +194,7 @@ def run_for_client(client: dict[str, Any]) -> dict[str, int]:
                 if person.get("email") in seen_emails:
                     continue
                 prospect = to_prospect_dict(person, client)
+                enrich.enrich_prospect(prospect)
                 # Idempotent insert: (client_id, external_id) unique.
                 if _upsert_prospect(client, prospect):
                     inserted += 1
@@ -227,16 +230,16 @@ def _upsert_prospect(client: dict[str, Any], prospect: dict[str, Any]) -> bool:
         return False
     conn.execute(
         "INSERT INTO prospects(id, client_id, business_name, niche, city, region, country, "
-        "website, phone, contact_name, contact_email, contact_title, source, external_id, "
-        "score, status, added_at) "
-        "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)",
+        "website, phone, contact_name, contact_email, contact_title, notes, source, "
+        "external_id, score, status, added_at) "
+        "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)",
         (
             uuid.uuid4().hex,
             client["id"], prospect["business_name"], prospect["niche"],
             prospect.get("city"), prospect.get("region"), prospect.get("country"),
             prospect.get("website"), prospect.get("phone"),
             prospect.get("contact_name"), prospect.get("contact_email"),
-            prospect.get("contact_title"), prospect["source"],
+            prospect.get("contact_title"), prospect.get("notes"), prospect["source"],
             prospect["external_id"], prospect["score"], db._now(),
         ),
     )

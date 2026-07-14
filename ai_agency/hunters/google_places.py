@@ -3,8 +3,10 @@ Google Places lead hunter.
 
 Pulls local-service-business listings from the official Places API using a
 Text Search followed by Place Details for the contact fields. Email is not
-exposed by Google; we leave contact_email null and let outreach/generator
-fall back to a domain-pattern guess + Hunter.io enrichment if configured.
+exposed by Google, so every result is run through hunters/enrich.py, which
+scrapes the business's own website for a real contact address and falls
+back to a guessed info@domain address (flagged in `notes`) when nothing is
+found.
 
 Endpoint reference:
   POST https://places.googleapis.com/v1/places:searchText
@@ -24,6 +26,7 @@ import requests
 
 from .. import db
 from ..config import load_settings
+from . import enrich
 
 LOG = logging.getLogger("hunters.google_places")
 
@@ -85,8 +88,9 @@ def to_prospect_dict(place: dict[str, Any], client: dict[str, Any]) -> dict[str,
         "website": place.get("websiteUri"),
         "phone": place.get("internationalPhoneNumber"),
         "contact_name": None,
-        "contact_email": None,  # not exposed by Places; outreach fills in or skips
+        "contact_email": None,  # not exposed by Places; run_for_client() enriches it below
         "contact_title": None,
+        "notes": None,
         "source": "Google Places",
         "score": _score(place),
     }
@@ -145,6 +149,7 @@ def run_for_client(client: dict[str, Any]) -> dict[str, int]:
                 if root and root in existing_domains:
                     found += 1
                     continue
+                enrich.enrich_prospect(prospect)
             if prospect.get("business_name") and _upsert_prospect(client, prospect):
                 inserted += 1
             found += 1
@@ -171,7 +176,8 @@ def _root_domain(url: str) -> str | None:
         if s.startswith(prefix):
             s = s[len(prefix):]
     s = s.split("/", 1)[0]
-    s = s.lstrip("www.")
+    if s.startswith("www."):
+        s = s[4:]
     return s or None
 
 
@@ -200,13 +206,16 @@ def _upsert_prospect(client: dict[str, Any], prospect: dict[str, Any]) -> bool:
     try:
         conn.execute(
             "INSERT INTO prospects(id, client_id, business_name, niche, city, region, country, "
-            "website, phone, source, external_id, score, status, added_at) "
-            "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)",
+            "website, phone, contact_name, contact_email, contact_title, notes, "
+            "source, external_id, score, status, added_at) "
+            "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)",
             (
                 uuid.uuid4().hex,
                 client["id"], prospect["business_name"], prospect["niche"],
                 prospect.get("city"), prospect.get("region"), prospect.get("country"),
                 prospect.get("website"), prospect.get("phone"),
+                prospect.get("contact_name"), prospect.get("contact_email"),
+                prospect.get("contact_title"), prospect.get("notes"),
                 prospect["source"], prospect["external_id"],
                 prospect["score"], db._now(),
             ),

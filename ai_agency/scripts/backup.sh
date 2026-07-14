@@ -5,12 +5,15 @@ BACKUP_DIR="$HOME/agency_backups"
 TIMESTAMP=$(date +"%Y-%m-%d_%H%M%S")
 mkdir -p "$BACKUP_DIR"
 
-# Snapshot code + SQLite archive
+# Snapshot code + SQLite archive. Multi-tenant layout: platform.db (the
+# workspaces/users/invites table) plus every workspace's own agency.db
+# under data/workspaces/<id>/ — there's no single data/agency.db anymore.
 tar -czf "$BACKUP_DIR/agency_system_snapshot_$TIMESTAMP.tar.gz" \
     -C "$PROJECT_ROOT" \
-    public hunters outreach scheduler scripts config db.py config.py requirements.txt \
+    public hunters outreach scheduler scripts config db.py config.py platform_db.py \
+    auth.py admin.py invites.py mail.py requirements.txt \
     Caddyfiles.txt docs \
-    data/agency.db 2>/dev/null
+    data/platform.db data/workspaces 2>/dev/null
 
 # Housekeeping
 find "$BACKUP_DIR" -type f -name "*.tar.gz" -mtime +30 -delete
