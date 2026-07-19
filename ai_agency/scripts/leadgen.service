@@ -1,0 +1,44 @@
+[Unit]
+Description=LeadGen AI orchestrator (Flask)
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/atrus5/leadgen-ai
+
+[Service]
+Type=simple
+User=__USER__
+Group=__USER__
+WorkingDirectory=__REPO_DIR__
+
+# Decrypt the in-repo env blob at every start. The Pi's PRIVATE age key
+# stays at /etc/leadgen.agekey (chmod 0400, root-owned) and never leaves
+# the box — the laptop can only ENCRYPT new values via deploy.sh.
+#
+# Failure modes that ExecStartPre surfaces cleanly:
+#   - /etc/leadgen.agekey missing → "decryption failed: no such file"
+#   - leadgen.env.enc missing in repo → "decryption failed: no such file"
+#   - wrong key / tamper → age exits non-zero → service enters failed state
+#     instead of silently starting with stale env values.
+ExecStartPre=/bin/sh -c '\
+  age -d -i /etc/leadgen.agekey -o /etc/leadgen.env __REPO_DIR__/leadgen.env.enc \
+    && chmod 0600 /etc/leadgen.env \
+    && chown root:root /etc/leadgen.env'
+
+# systemd reads this as root and exposes the variables to the User=__USER__
+# process via setenv — the process itself never has to read the file.
+EnvironmentFile=/etc/leadgen.env
+
+ExecStart=__REPO_DIR__/ai_agency/.venv/bin/python -m ai_agency.app
+
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# A 30s timeout gives the Flask app a chance to handle SIGTERM cleanly
+# (drain in-flight requests, close the DB connection) rather than getting
+# an immediate SIGKILL.
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
