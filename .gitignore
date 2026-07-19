@@ -1,0 +1,28 @@
+# ────────────────────────────────────────────────────────────────────────
+# Plaintext env/screts files — NEVER commit these.
+#
+# The encrypted counterpart `leadgen.env.enc` IS intentional tracked from
+# the repo root; `*.env` only matches names ending in `.env`, so the .enc
+# variant is not affected. See scripts/deploy.sh for the laptop-side
+# encrypt-push workflow and scripts/setup_pi.sh for the Pi-side decrypt.
+# ────────────────────────────────────────────────────────────────────────
+.env
+*.env
+.env.local
+.envrc
+.env.*
+
+# Misc local junk that should not be versioned
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+*.swp
+*~
+
+# Local backups + LLM caches
+agency_backups/
+*.tar.gz
+.llm_cache/

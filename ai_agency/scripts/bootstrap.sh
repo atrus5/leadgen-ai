@@ -26,12 +26,19 @@ PACKAGE_PARENT="$(cd "$PROJECT_ROOT/.." && pwd)"
 
 # Source the operator's env file if it exists, but don't fail if missing
 # (we just warn about the consequences below).
-if [ -f /etc/leadgen.env ]; then
+if [ -r /etc/leadgen.env ]; then
     echo "✓ sourcing /etc/leadgen.env"
     set -a
     # shellcheck disable=SC1091
     . /etc/leadgen.env
     set +a
+elif [ -e /etc/leadgen.env ]; then
+    echo "⚠️  /etc/leadgen.env exists but is not readable by $(whoami); secrets not loaded." >&2
+    echo "   Re-run as root, or chmod 0640 /etc/leadgen.env and add yourself to the owning group." >&2
+elif [ ! -e /etc/leadgen.agekey ]; then
+    echo "💡 hint: /etc/leadgen.agekey not set up yet — run scripts/setup_pi.sh on the Pi" >&2
+    echo "   to provision the decrypt key + systemd unit. The encrypted blob" >&2
+    echo "   leadgen.env.enc in the repo is unusable without it." >&2
 fi
 
 # Warn loudly if the production env vars are missing. Don't fail — the
@@ -77,7 +84,12 @@ print("  If migrating an existing single-tenant install, instead run:")
 print("    python -m ai_agency.scripts.migrate_to_workspace")
 PY
 
-# 4) start
+# 4) start (production). For hands-on first-install you can keep using this
+# foreground launch, but in production the canonical entry point is systemd —
+# see ../scripts/setup_pi.sh (one-shot Pi provisioning) and
+# ../scripts/leadgen.service (the unit file). The systemd unit's ExecStartPre
+# decrypts leadgen.env.enc → /etc/leadgen.env on every start, so this
+# foreground path picks up new env vars on the next deploy.
 echo "→ starting Flask app on 0.0.0.0:5000"
 cd "$PACKAGE_PARENT"
 exec env PYTHONPATH="$PACKAGE_PARENT" \
